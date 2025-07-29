@@ -1,0 +1,174 @@
+# AI 라이선스 대출 시스템
+
+기관에서 구매한 AI 라이선스를 소속 구성원들이 대출받아 사용할 수 있는 관리 시스템입니다.
+
+## 주요 기능
+
+- **기관별 라이선스 관리**: 기관이 AI 라이선스를 구매하고 관리
+- **라이선스 대출**: 소속 구성원이 사용 가능한 라이선스 목록 확인 및 대출 신청
+- **대출 기간 관리**: 각 라이선스별 대출 가능 기간 설정 및 관리
+- **대출 내역 조회**: 사용자의 대출 기록 확인
+- **라이선스 반납**: 사용 완료된 라이선스 반납 처리
+
+## 기술 스택
+
+### Backend
+- Node.js
+- Express.js
+- SQLite3
+- JWT (인증)
+- bcryptjs (비밀번호 암호화)
+
+### Frontend
+- React.js
+- React Router
+- Axios (HTTP 클라이언트)
+- CSS3
+
+## 설치 및 실행
+
+### 1. 의존성 설치
+
+```bash
+# 루트 디렉토리에서
+npm run install-all
+```
+
+또는 각각 설치:
+
+```bash
+# 서버 의존성 설치
+cd server
+npm install
+
+# 클라이언트 의존성 설치
+cd ../client
+npm install
+```
+
+### 2. 서버 실행
+
+```bash
+# 개발 모드 (서버만)
+cd server
+npm run dev
+
+# 또는 루트에서
+npm run server
+```
+
+### 3. 클라이언트 실행
+
+```bash
+# 새 터미널에서
+cd client
+npm start
+
+# 또는 루트에서
+npm run client
+```
+
+### 4. 전체 애플리케이션 실행
+
+```bash
+# 루트 디렉토리에서 (서버 + 클라이언트 동시 실행)
+npm run dev
+```
+
+## 사용법
+
+### 1. 회원가입
+- `/register` 페이지에서 소속 기관을 선택하고 계정 생성
+- 기관 정보는 관리자가 미리 등록해야 함
+
+### 2. 로그인
+- `/login` 페이지에서 이메일과 비밀번호로 로그인
+
+### 3. 라이선스 대출
+- 메인 페이지에서 사용 가능한 AI 라이선스 목록 확인
+- 원하는 라이선스의 "대출 신청" 버튼 클릭
+- 대출 기간은 라이선스별로 설정된 기간만큼 자동 설정
+
+### 4. 대출 내역 확인
+- "대출 내역" 메뉴에서 본인의 대출 기록 확인
+- 대출 중인 라이선스는 "반납" 버튼으로 조기 반납 가능
+
+## API 엔드포인트
+
+### 인증
+- `POST /api/auth/login` - 로그인
+- `POST /api/auth/register` - 회원가입
+
+### 라이선스
+- `GET /api/licenses` - 기관별 라이선스 목록 조회
+- `POST /api/licenses/:id/loan` - 라이선스 대출 신청
+
+### 대출 관리
+- `GET /api/loans` - 사용자 대출 내역 조회
+- `POST /api/loans/:id/return` - 라이선스 반납
+
+### 기관
+- `GET /api/organizations` - 기관 목록 조회
+
+## 데이터베이스 구조
+
+### organizations (기관)
+- id: 고유 식별자
+- name: 기관명
+- email: 기관 이메일
+
+### users (사용자)
+- id: 고유 식별자
+- organization_id: 소속 기관 ID
+- name: 사용자명
+- email: 이메일
+- password: 암호화된 비밀번호
+- role: 사용자 역할
+
+### ai_licenses (AI 라이선스)
+- id: 고유 식별자
+- organization_id: 소유 기관 ID
+- name: 라이선스명
+- description: 설명
+- total_licenses: 전체 라이선스 수
+- available_licenses: 사용 가능한 라이선스 수
+- max_loan_days: 최대 대출 기간
+
+### license_loans (라이선스 대출)
+- id: 고유 식별자
+- license_id: 라이선스 ID
+- user_id: 사용자 ID
+- loan_date: 대출일
+- return_date: 반납 예정일
+- status: 대출 상태 (active/returned)
+
+## 샘플 데이터
+
+시스템 실행 시 자동으로 다음 샘플 데이터가 생성됩니다:
+
+- **기관**: 테스트 기관
+- **사용자**: 테스트 사용자 (user@test.com / password123)
+- **라이선스**: 
+  - ChatGPT Pro (10개 중 8개 사용 가능, 30일 대출)
+  - Claude Pro (5개 중 3개 사용 가능, 14일 대출)
+
+## 환경 설정
+
+### 서버 포트
+기본 포트: 5000
+환경변수 `PORT`로 변경 가능
+
+### 데이터베이스
+SQLite 파일: `server/database.sqlite`
+자동으로 생성되며 초기 테이블과 샘플 데이터 포함
+
+## 보안 기능
+
+- JWT 토큰 기반 인증
+- bcrypt를 사용한 비밀번호 암호화
+- 기관별 라이선스 접근 제한
+- 중복 대출 방지
+
+## 라이선스
+
+MIT License 
