@@ -15,12 +15,51 @@ function Login({ onLogin }) {
     organization_id: ''
   });
   const [organizations, setOrganizations] = useState([]);
+  const [showPassword, setShowPassword] = useState(false);
+  const [autoLoginEnabled, setAutoLoginEnabled] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
+  };
+
+  // 이메일 입력 시 도메인 확인
+  const handleEmailChange = async (e) => {
+    const emailValue = e.target.value;
+    setFormData({
+      ...formData,
+      email: emailValue
+    });
+    
+    if (emailValue.includes('@')) {
+      try {
+        const response = await axios.post('/api/auth/check-domain', { email: emailValue });
+        
+        if (response.data.autoLogin) {
+          // 자동 로그인 성공
+          onLogin(response.data.user, response.data.token);
+        } else if (response.data.organization_id) {
+          // 최초 로그인 필요
+          setShowPassword(true);
+          setAutoLoginEnabled(false);
+          setFirstLoginData({
+            ...firstLoginData,
+            email: emailValue,
+            organization_id: response.data.organization_id
+          });
+        } else {
+          // 일반 로그인 필요
+          setShowPassword(true);
+          setAutoLoginEnabled(false);
+        }
+      } catch (error) {
+        // 일반 로그인 필요
+        setShowPassword(true);
+        setAutoLoginEnabled(false);
+      }
+    }
   };
 
   const handleFirstLoginChange = (e) => {
@@ -94,33 +133,38 @@ function Login({ onLogin }) {
               name="email"
               className="form-control"
               value={formData.email}
-              onChange={handleChange}
+              onChange={handleEmailChange}
               placeholder="example@eiaisoft.com"
               required
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="password">비밀번호</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              className="form-control"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
-          </div>
+          {showPassword && (
+            <div className="form-group">
+              <label htmlFor="password">비밀번호</label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                className="form-control"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="비밀번호를 입력하세요"
+                required
+              />
+            </div>
+          )}
 
-          <button
-            type="submit"
-            className="btn btn-primary"
-            style={{ width: '100%' }}
-            disabled={loading}
-          >
-            {loading ? '로그인 중...' : '로그인'}
-          </button>
+          {!autoLoginEnabled && showPassword && (
+            <button
+              type="submit"
+              className="btn btn-primary"
+              style={{ width: '100%' }}
+              disabled={loading}
+            >
+              {loading ? '로그인 중...' : '로그인'}
+            </button>
+          )}
         </form>
       ) : (
         <form onSubmit={handleFirstLogin}>
