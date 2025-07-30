@@ -102,7 +102,7 @@ app.post('/api/auth/login', async (req, res) => {
       role: user.role,
       isFirstLogin: user.is_first_login === 1
     },
-    JWT_SECRET,
+    process.env.JWT_SECRET,
     { expiresIn: '24h' }
   );
 
@@ -178,7 +178,7 @@ app.post('/api/auth/first-login', async (req, res) => {
 
   const token = jwt.sign(
     { id: userId, email, organization_id, role: 'user', isFirstLogin: true },
-    JWT_SECRET,
+    process.env.JWT_SECRET,
     { expiresIn: '24h' }
   );
 
