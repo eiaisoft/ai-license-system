@@ -13,9 +13,17 @@ function Navbar({ user, onLogout }) {
           {user ? (
             <>
               {user.role === 'admin' && (
-                <li>
-                  <Link to="/admin">홈</Link>
-                </li>
+                <>
+                  <li>
+                    <Link to="/admin">홈</Link>
+                  </li>
+                  <li>
+                    <Link to="/admin/licenses">라이선스 관리</Link>
+                  </li>
+                  <li>
+                    <Link to="/admin/loans">대출 관리</Link>
+                  </li>
+                </>
               )}
               <li>
                 <Link to="/">라이선스 목록</Link>

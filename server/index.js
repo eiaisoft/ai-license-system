@@ -317,6 +317,85 @@ app.get('/api/licenses', async (req, res) => {
   res.json(licenses);
 });
 
+// 관리자 - 모든 라이선스 목록 조회
+app.get('/api/admin/licenses', authenticateToken, requireAdmin, async (req, res) => {
+  const { data: licenses, error } = await supabase
+    .from('ai_licenses')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) return res.status(500).json({ error: '라이선스 목록 조회 중 오류가 발생했습니다.' });
+  res.json(licenses);
+});
+
+// 관리자 - 라이선스 추가
+app.post('/api/admin/licenses', authenticateToken, requireAdmin, async (req, res) => {
+  const { name, description, total_licenses, max_loan_days } = req.body;
+
+  if (!name || !description || !total_licenses || !max_loan_days) {
+    return res.status(400).json({ error: '모든 필드를 입력해주세요.' });
+  }
+
+  const licenseId = uuidv4();
+  const { data: newLicense, error: insertError } = await supabase
+    .from('ai_licenses')
+    .insert([
+      {
+        id: licenseId,
+        name,
+        description,
+        total_licenses,
+        available_licenses: total_licenses,
+        max_loan_days,
+        created_at: new Date().toISOString()
+      }
+    ])
+    .select()
+    .single();
+
+  if (insertError) {
+    return res.status(500).json({ error: '라이선스 추가 중 오류가 발생했습니다.' });
+  }
+
+  res.status(201).json({
+    message: '라이선스가 성공적으로 추가되었습니다.',
+    license: newLicense
+  });
+});
+
+// 관리자 - 라이선스 삭제
+app.delete('/api/admin/licenses/:id', authenticateToken, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+
+  // 해당 라이선스의 대출 내역 확인
+  const { data: loans, error: loanError } = await supabase
+    .from('license_loans')
+    .select('id')
+    .eq('license_id', id)
+    .eq('status', 'active');
+
+  if (loanError) {
+    return res.status(500).json({ error: '대출 내역 확인 중 오류가 발생했습니다.' });
+  }
+
+  if (loans && loans.length > 0) {
+    return res.status(400).json({ 
+      error: '현재 대출 중인 라이선스는 삭제할 수 없습니다.' 
+    });
+  }
+
+  const { error: deleteError } = await supabase
+    .from('ai_licenses')
+    .delete()
+    .eq('id', id);
+
+  if (deleteError) {
+    return res.status(500).json({ error: '라이선스 삭제 중 오류가 발생했습니다.' });
+  }
+
+  res.json({ message: '라이선스가 성공적으로 삭제되었습니다.' });
+});
+
 // 라이선스 대출 신청
 app.post('/api/licenses/:licenseId/loan', authenticateToken, async (req, res) => {
   const { licenseId } = req.params;
@@ -412,6 +491,84 @@ app.get('/api/loans', authenticateToken, async (req, res) => {
 
   if (error) return res.status(500).json({ error: '대출 내역 조회 중 오류가 발생했습니다.' });
   res.json(loans);
+});
+
+// 관리자 - 모든 대출 내역 조회
+app.get('/api/admin/loans', authenticateToken, requireAdmin, async (req, res) => {
+  const { data: loans, error } = await supabase
+    .from('license_loans')
+    .select(`
+      ll.id,
+      ll.loan_date,
+      ll.return_date,
+      ll.status,
+      u.name as user_name,
+      u.email as user_email,
+      al.name as license_name,
+      al.description as license_description
+    `)
+    .order('ll.loan_date', { ascending: false });
+
+  if (error) return res.status(500).json({ error: '대출 내역 조회 중 오류가 발생했습니다.' });
+  res.json(loans);
+});
+
+// 관리자 - 강제 반납 처리
+app.post('/api/admin/loans/:loanId/force-return', authenticateToken, requireAdmin, async (req, res) => {
+  const { loanId } = req.params;
+
+  const { data: loan, error } = await supabase
+    .from('license_loans')
+    .select('*')
+    .eq('id', loanId)
+    .eq('status', 'active')
+    .single();
+
+  if (error) {
+    return res.status(500).json({ error: '대출 정보 확인 중 오류가 발생했습니다.' });
+  }
+
+  if (!loan) {
+    return res.status(404).json({ error: '대출 정보를 찾을 수 없습니다.' });
+  }
+
+  // 대출 상태를 반납으로 변경
+  const { error: updateLoanError } = await supabase
+    .from('license_loans')
+    .update({ status: 'returned' })
+    .eq('id', loanId);
+
+  if (updateLoanError) {
+    return res.status(500).json({ error: '반납 처리 중 오류가 발생했습니다.' });
+  }
+
+  // 사용 가능한 라이선스 수 증가
+  const { error: updateLicenseError } = await supabase
+    .from('ai_licenses')
+    .update({ available_licenses: license.available_licenses + 1 })
+    .eq('id', loan.license_id);
+
+  if (updateLicenseError) {
+    return res.status(500).json({ error: '라이선스 수량 증가 중 오류가 발생했습니다.' });
+  }
+
+  res.json({ message: '대출이 강제 반납 처리되었습니다.' });
+});
+
+// 관리자 - 대출 기록 삭제
+app.delete('/api/admin/loans/:loanId', authenticateToken, requireAdmin, async (req, res) => {
+  const { loanId } = req.params;
+
+  const { error: deleteError } = await supabase
+    .from('license_loans')
+    .delete()
+    .eq('id', loanId);
+
+  if (deleteError) {
+    return res.status(500).json({ error: '대출 기록 삭제 중 오류가 발생했습니다.' });
+  }
+
+  res.json({ message: '대출 기록이 삭제되었습니다.' });
 });
 
 // 라이선스 반납

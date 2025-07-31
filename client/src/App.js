@@ -6,6 +6,8 @@ import LicenseList from './components/LicenseList';
 import LoanHistory from './components/LoanHistory';
 import ChangePassword from './components/ChangePassword';
 import AdminHome from './components/AdminHome';
+import AdminLicenseList from './components/AdminLicenseList';
+import AdminLoanHistory from './components/AdminLoanHistory';
 import './App.css';
 
 function App() {
@@ -70,6 +72,14 @@ function App() {
               <Route 
                 path="/admin" 
                 element={user && user.role === 'admin' ? <AdminHome user={user} /> : <Navigate to="/" />} 
+              />
+              <Route 
+                path="/admin/licenses" 
+                element={user && user.role === 'admin' ? <AdminLicenseList user={user} /> : <Navigate to="/" />} 
+              />
+              <Route 
+                path="/admin/loans" 
+                element={user && user.role === 'admin' ? <AdminLoanHistory user={user} /> : <Navigate to="/" />} 
               />
               <Route 
                 path="/login" 
