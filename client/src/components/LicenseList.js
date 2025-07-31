@@ -42,9 +42,7 @@ function LicenseList({ user }) {
     }
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('ko-KR');
-  };
+
 
   if (loading) {
     return <div className="text-center">라이선스 목록을 불러오는 중...</div>;
