@@ -8,7 +8,12 @@ const app = express();
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
+
+// Supabase 환경 변수에 기본값 추가
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://your-project.supabase.co';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'your-anon-key';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // 관리자 이메일 설정
 const ADMIN_EMAIL = 'admin@eiaisoft.com';
@@ -22,8 +27,12 @@ function authenticateToken(req, res, next) {
     return res.status(401).json({ error: '액세스 토큰이 필요합니다.' });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+  // JWT_SECRET이 설정되지 않은 경우 기본값 사용
+  const jwtSecret = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+  
+  jwt.verify(token, jwtSecret, (err, user) => {
     if (err) {
+      console.error('JWT verification error:', err.message);
       return res.status(403).json({ error: '유효하지 않은 토큰입니다.' });
     }
     req.user = user;
@@ -74,7 +83,7 @@ app.post('/api/auth/check-domain', async (req, res) => {
           role: 'user',
           isFirstLogin: user.is_first_login === 1
         },
-        process.env.JWT_SECRET,
+        process.env.JWT_SECRET || 'your-secret-key-change-in-production',
         { expiresIn: '24h' }
       );
       
@@ -130,7 +139,7 @@ app.post('/api/auth/admin-login', async (req, res) => {
       email: ADMIN_EMAIL, 
       role: 'admin'
     },
-    process.env.JWT_SECRET,
+    process.env.JWT_SECRET || 'your-secret-key-change-in-production',
     { expiresIn: '24h' }
   );
 
@@ -169,7 +178,7 @@ app.post('/api/auth/login', async (req, res) => {
       role: user.role,
       isFirstLogin: user.is_first_login === 1
     },
-    process.env.JWT_SECRET,
+    process.env.JWT_SECRET || 'your-secret-key-change-in-production',
     { expiresIn: '24h' }
   );
 
@@ -245,7 +254,7 @@ app.post('/api/auth/first-login', async (req, res) => {
 
   const token = jwt.sign(
     { id: userId, email, organization_id, role: 'user', isFirstLogin: true },
-    process.env.JWT_SECRET,
+    process.env.JWT_SECRET || 'your-secret-key-change-in-production',
     { expiresIn: '24h' }
   );
 
@@ -835,6 +844,12 @@ async function initializeJbnuDomain() {
 // 서버 시작
 app.listen(PORT, async () => {
   console.log(`서버가 포트 ${PORT}에서 실행 중입니다.`);
+  
+  // 환경 변수 확인 로그
+  console.log('환경 변수 확인:');
+  console.log('- JWT_SECRET:', process.env.JWT_SECRET ? '설정됨' : '기본값 사용');
+  console.log('- SUPABASE_URL:', process.env.SUPABASE_URL ? '설정됨' : '기본값 사용');
+  console.log('- SUPABASE_ANON_KEY:', process.env.SUPABASE_ANON_KEY ? '설정됨' : '기본값 사용');
   
   // jbnu.ac.kr 도메인 자동 등록
   await initializeJbnuDomain();
