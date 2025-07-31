@@ -1,0 +1,5 @@
+[33m3c6e631[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Add comprehensive admin management features: license management, loan management, and enhanced navigation
+[33m9ab21d8[m Add admin home page and navigation menu
+[33m9910ecd[m Resolve merge conflict: Keep local version with admin features
+[33mbb22b9a[m Update server index.js with admin features
+[33ma9fd360[m Fix ESLint error: Remove unused formatDate function
