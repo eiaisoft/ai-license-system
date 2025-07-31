@@ -5,6 +5,7 @@ import Login from './components/Login';
 import LicenseList from './components/LicenseList';
 import LoanHistory from './components/LoanHistory';
 import ChangePassword from './components/ChangePassword';
+import AdminHome from './components/AdminHome';
 import './App.css';
 
 function App() {
@@ -65,6 +66,10 @@ function App() {
               <Route 
                 path="/" 
                 element={user ? <LicenseList user={user} /> : <Navigate to="/login" />} 
+              />
+              <Route 
+                path="/admin" 
+                element={user && user.role === 'admin' ? <AdminHome user={user} /> : <Navigate to="/" />} 
               />
               <Route 
                 path="/login" 

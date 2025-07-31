@@ -12,6 +12,11 @@ function Navbar({ user, onLogout }) {
         <ul className="navbar-nav">
           {user ? (
             <>
+              {user.role === 'admin' && (
+                <li>
+                  <Link to="/admin">홈</Link>
+                </li>
+              )}
               <li>
                 <Link to="/">라이선스 목록</Link>
               </li>
