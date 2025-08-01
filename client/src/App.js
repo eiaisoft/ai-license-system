@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import './config'; // 이 줄 추가!
 import Navbar from './components/Navbar';
 import Login from './components/Login';
 import ChangePassword from './components/ChangePassword';
