@@ -1,18 +1,7 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "client/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "build"
-      }
-    },
-    {
-      "src": "server/index.js",
-      "use": "@vercel/node"
-    }
-  ],
+  "buildCommand": "cd client && npm run build",
+  "outputDirectory": "client/build",
   "rewrites": [
     {
       "source": "/api/(.*)",
@@ -29,7 +18,6 @@
     }
   },
   "env": {
-    "NODE_ENV": "production",
-    "VERCEL_FORCE_NO_BUILD_CACHE": "1"
+    "NODE_ENV": "production"
   }
 }
