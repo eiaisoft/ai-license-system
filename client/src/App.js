@@ -2,12 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Login from './components/Login';
-import LicenseList from './components/LicenseList';
-import LoanHistory from './components/LoanHistory';
 import ChangePassword from './components/ChangePassword';
 import AdminHome from './components/AdminHome';
 import AdminLicenseList from './components/AdminLicenseList';
-import AdminLoanHistory from './components/AdminLoanHistory';
+import AdminOrganizations from './components/AdminOrganizations';
 import './App.css';
 
 function App() {
@@ -67,7 +65,7 @@ function App() {
             <Routes>
               <Route 
                 path="/" 
-                element={user ? <LicenseList user={user} /> : <Navigate to="/login" />} 
+                element={user && user.role === 'admin' ? <AdminHome user={user} /> : <Navigate to="/login" />} 
               />
               <Route 
                 path="/admin" 
@@ -78,16 +76,12 @@ function App() {
                 element={user && user.role === 'admin' ? <AdminLicenseList user={user} /> : <Navigate to="/" />} 
               />
               <Route 
-                path="/admin/loans" 
-                element={user && user.role === 'admin' ? <AdminLoanHistory user={user} /> : <Navigate to="/" />} 
+                path="/admin/organizations" 
+                element={user && user.role === 'admin' ? <AdminOrganizations user={user} /> : <Navigate to="/" />} 
               />
               <Route 
                 path="/login" 
                 element={user ? <Navigate to="/" /> : <Login onLogin={login} />} 
-              />
-              <Route 
-                path="/loans" 
-                element={user ? <LoanHistory user={user} /> : <Navigate to="/login" />} 
               />
             </Routes>
           )}
@@ -97,4 +91,4 @@ function App() {
   );
 }
 
-export default App; 
+export default App;

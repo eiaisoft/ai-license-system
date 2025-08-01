@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import ErrorMessage from './ErrorMessage';
 
 function AdminLicenseList({ user }) {
   const [licenses, setLicenses] = useState([]);
@@ -41,8 +42,7 @@ function AdminLicenseList({ user }) {
       });
       
       setMessage('라이선스가 성공적으로 추가되었습니다.');
-      setShowAddForm(false);
-      setNewLicense({ name: '', description: '', total_licenses: 0, max_loan_days: 30 });
+      setNewLicense({ name: '', description: '', total_count: '' });
       fetchLicenses();
       
       setTimeout(() => setMessage(''), 3000);
@@ -216,4 +216,4 @@ function AdminLicenseList({ user }) {
   );
 }
 
-export default AdminLicenseList; 
+export default AdminLicenseList;

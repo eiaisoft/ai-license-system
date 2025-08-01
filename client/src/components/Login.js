@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import ErrorMessage from './ErrorMessage';
 
 function Login({ onLogin }) {
   const [formData, setFormData] = useState({
@@ -33,7 +34,14 @@ function Login({ onLogin }) {
       email: emailValue
     });
     
-    if (emailValue.includes('@')) {
+    // 관리자 이메일인 경우 바로 비밀번호 입력 표시
+    if (emailValue === 'admin@eiaisoft.com') {
+      setShowPassword(true);
+      setAutoLoginEnabled(false);
+      return;
+    }
+    
+    if (emailValue.includes('@') && emailValue.split('@')[1]) {
       try {
         const response = await axios.post('/api/auth/check-domain', { email: emailValue });
         
@@ -55,6 +63,7 @@ function Login({ onLogin }) {
           setAutoLoginEnabled(false);
         }
       } catch (error) {
+        console.log('도메인 확인 실패:', error.message);
         // 일반 로그인 필요
         setShowPassword(true);
         setAutoLoginEnabled(false);
@@ -75,18 +84,29 @@ function Login({ onLogin }) {
     setLoading(true);
 
     try {
-      const response = await axios.post('/api/auth/login', formData);
-      onLogin(response.data.user, response.data.token);
+      // 관리자 이메일인지 확인
+      if (formData.email === 'admin@eiaisoft.com') {
+        const response = await axios.post('/api/auth/admin-login', formData);
+        onLogin(response.data.user, response.data.token);
+      } else {
+        const response = await axios.post('/api/auth/login', formData);
+        onLogin(response.data.user, response.data.token);
+      }
     } catch (err) {
+      console.log('로그인 오류:', err.message, err.response?.data);
       if (err.response?.status === 401) {
-        setError('이메일 또는 비밀번호가 올바르지 않습니다. 최초 로그인이신가요?');
-        setShowFirstLogin(true);
-        // 기관 목록 가져오기
-        try {
-          const orgResponse = await axios.get('/api/organizations');
-          setOrganizations(orgResponse.data);
-        } catch (orgErr) {
-          console.error('기관 목록 조회 실패:', orgErr);
+        if (formData.email === 'admin@eiaisoft.com') {
+          setError('관리자 비밀번호가 올바르지 않습니다.');
+        } else {
+          setError('이메일 또는 비밀번호가 올바르지 않습니다. 최초 로그인이신가요?');
+          setShowFirstLogin(true);
+          // 기관 목록 가져오기
+          try {
+            const orgResponse = await axios.get('/api/organizations');
+            setOrganizations(orgResponse.data);
+          } catch (orgErr) {
+            console.error('기관 목록 조회 실패:', orgErr);
+          }
         }
       } else {
         setError(err.response?.data?.error || '로그인 중 오류가 발생했습니다.');
@@ -107,6 +127,7 @@ function Login({ onLogin }) {
       setShowFirstLogin(false);
       setFormData({ email: firstLoginData.email, password: '' });
     } catch (err) {
+      console.log('계정 생성 오류:', err.message, err.response?.data);
       setError(err.response?.data?.error || '계정 생성 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
@@ -117,11 +138,7 @@ function Login({ onLogin }) {
     <div className="card" style={{ maxWidth: '400px', margin: '50px auto' }}>
       <h2 className="text-center mb-3">AI 라이선스 대출 시스템</h2>
       
-      {error && (
-        <div className="alert alert-danger">
-          {error}
-        </div>
-      )}
+      <ErrorMessage message={error} />
 
       {!showFirstLogin ? (
         <form onSubmit={handleSubmit}>
@@ -242,4 +259,4 @@ function Login({ onLogin }) {
   );
 }
 
-export default Login; 
+export default Login;

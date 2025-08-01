@@ -21,16 +21,10 @@ function Navbar({ user, onLogout }) {
                     <Link to="/admin/licenses">라이선스 관리</Link>
                   </li>
                   <li>
-                    <Link to="/admin/loans">대출 관리</Link>
+                    <Link to="/admin/organizations">기관 관리</Link>
                   </li>
                 </>
               )}
-              <li>
-                <Link to="/">라이선스 목록</Link>
-              </li>
-              <li>
-                <Link to="/loans">대출 내역</Link>
-              </li>
               <li>
                 <span style={{ color: '#fff', padding: '5px 10px' }}>
                   {user.name}님
@@ -64,4 +58,4 @@ function Navbar({ user, onLogout }) {
   );
 }
 
-export default Navbar; 
+export default Navbar;

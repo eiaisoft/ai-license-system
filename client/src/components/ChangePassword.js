@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import ErrorMessage from './ErrorMessage';
 
 function ChangePassword({ user, onPasswordChanged }) {
   const [formData, setFormData] = useState({
@@ -36,8 +37,8 @@ function ChangePassword({ user, onPasswordChanged }) {
     try {
       const token = localStorage.getItem('token');
       await axios.post('/api/auth/change-password', {
-        currentPassword: formData.currentPassword,
-        newPassword: formData.newPassword
+        currentPassword,
+        newPassword
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -119,4 +120,4 @@ function ChangePassword({ user, onPasswordChanged }) {
   );
 }
 
-export default ChangePassword; 
+export default ChangePassword;

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import ErrorMessage from './ErrorMessage';
 
 function LoanHistory({ user }) {
   const [loans, setLoans] = useState([]);
@@ -37,7 +38,7 @@ function LoanHistory({ user }) {
       });
       
       setMessage('라이선스가 성공적으로 반납되었습니다.');
-      fetchLoans(); // 목록 새로고침
+      fetchLoans();
       
       setTimeout(() => setMessage(''), 3000);
     } catch (err) {
@@ -133,4 +134,4 @@ function LoanHistory({ user }) {
   );
 }
 
-export default LoanHistory; 
+export default LoanHistory;

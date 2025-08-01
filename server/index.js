@@ -1,10 +1,19 @@
 const express = require('express');
+const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
+require('dotenv').config();
 
 const app = express();
+
+// CORS 설정
+app.use(cors({
+  origin: ['http://localhost:3001', 'http://localhost:3002'],
+  credentials: true
+}));
+
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
@@ -23,7 +32,15 @@ function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
+  console.log('인증 요청:', {
+    url: req.url,
+    method: req.method,
+    authHeader: authHeader,
+    token: token ? 'exists' : 'missing'
+  });
+
   if (!token) {
+    console.log('토큰 없음');
     return res.status(401).json({ error: '액세스 토큰이 필요합니다.' });
   }
 
@@ -35,6 +52,7 @@ function authenticateToken(req, res, next) {
       console.error('JWT verification error:', err.message);
       return res.status(403).json({ error: '유효하지 않은 토큰입니다.' });
     }
+    console.log('토큰 검증 성공:', { userId: user.id, email: user.email, role: user.role });
     req.user = user;
     next();
   });
@@ -42,9 +60,17 @@ function authenticateToken(req, res, next) {
 
 // 관리자 권한 확인 미들웨어
 function requireAdmin(req, res, next) {
+  console.log('관리자 권한 확인:', {
+    userEmail: req.user?.email,
+    adminEmail: ADMIN_EMAIL,
+    isAdmin: req.user?.email === ADMIN_EMAIL
+  });
+  
   if (req.user.email !== ADMIN_EMAIL) {
+    console.log('관리자 권한 없음');
     return res.status(403).json({ error: '관리자 권한이 필요합니다.' });
   }
+  console.log('관리자 권한 확인됨');
   next();
 }
 
@@ -551,10 +577,32 @@ app.post('/api/admin/loans/:loanId/force-return', authenticateToken, requireAdmi
     return res.status(500).json({ error: '반납 처리 중 오류가 발생했습니다.' });
   }
 
+  // 라이센스 정보 가져오기
+  const { data: licenseData, error: licenseQueryError } = await supabase
+    .from('ai_licenses')
+    .select('*')
+    .eq('id', loan.license_id)
+    .single();
+
+  if (licenseError) {
+    return res.status(500).json({ error: '라이센스 정보 조회 중 오류가 발생했습니다.' });
+  }
+
+  // 라이센스 정보 가져오기
+  const { data: license, error: licenseError } = await supabase
+    .from('ai_licenses')
+    .select('*')
+    .eq('id', loan.license_id)
+    .single();
+
+  if (licenseQueryError) {
+    return res.status(500).json({ error: '라이센스 정보 조회 중 오류가 발생했습니다.' });
+  }
+
   // 사용 가능한 라이선스 수 증가
   const { error: updateLicenseError } = await supabase
     .from('ai_licenses')
-    .update({ available_licenses: license.available_licenses + 1 })
+    .update({ available_licenses: licenseData.available_licenses + 1 })
     .eq('id', loan.license_id);
 
   if (updateLicenseError) {
@@ -685,49 +733,60 @@ app.post('/api/admin/organizations', authenticateToken, requireAdmin, async (req
 
 // 관리자 - 기관 도메인 수정
 app.put('/api/admin/organizations/:id', authenticateToken, requireAdmin, async (req, res) => {
-  const { id } = req.params;
-  const { name, email_domain, auto_login_enabled } = req.body;
+  try {
+    const { id } = req.params;
+    const { name, email_domain, auto_login_enabled } = req.body;
 
-  if (!name || !email_domain) {
-    return res.status(400).json({ error: '기관명과 이메일 도메인을 입력해주세요.' });
+    console.log('기관 업데이트 요청:', { id, name, email_domain, auto_login_enabled });
+
+    if (!name || !email_domain) {
+      console.log('필수 필드 누락:', { name, email_domain });
+      return res.status(400).json({ error: '기관명과 이메일 도메인을 입력해주세요.' });
+    }
+
+    // 다른 기관과 도메인 중복 확인
+    const { data: existingOrg, error: checkError } = await supabase
+      .from('organizations')
+      .select('*')
+      .eq('email_domain', email_domain)
+      .neq('id', id)
+      .limit(1);
+
+    if (checkError) {
+      console.error('도메인 중복 확인 오류:', checkError);
+      return res.status(500).json({ error: '도메인 확인 중 오류가 발생했습니다.' });
+    }
+
+    if (existingOrg && existingOrg.length > 0) {
+      console.log('도메인 중복:', email_domain);
+      return res.status(400).json({ error: '이미 다른 기관에서 사용 중인 도메인입니다.' });
+    }
+
+    const { data: updatedOrg, error: updateError } = await supabase
+      .from('organizations')
+      .update({
+        name,
+        email_domain,
+        auto_login_enabled
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('기관 업데이트 오류:', updateError);
+      return res.status(500).json({ error: '기관 수정 중 오류가 발생했습니다.' });
+    }
+
+    console.log('기관 업데이트 성공:', updatedOrg);
+    res.json({
+      message: '기관이 성공적으로 수정되었습니다.',
+      organization: updatedOrg
+    });
+  } catch (error) {
+    console.error('기관 업데이트 예외:', error);
+    res.status(500).json({ error: '서버 내부 오류가 발생했습니다.' });
   }
-
-  // 다른 기관과 도메인 중복 확인
-  const { data: existingOrg, error: checkError } = await supabase
-    .from('organizations')
-    .select('*')
-    .eq('email_domain', email_domain)
-    .neq('id', id)
-    .limit(1);
-
-  if (checkError) {
-    return res.status(500).json({ error: '도메인 확인 중 오류가 발생했습니다.' });
-  }
-
-  if (existingOrg && existingOrg.length > 0) {
-    return res.status(400).json({ error: '이미 다른 기관에서 사용 중인 도메인입니다.' });
-  }
-
-  const { data: updatedOrg, error: updateError } = await supabase
-    .from('organizations')
-    .update({
-      name,
-      email_domain,
-      auto_login_enabled,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (updateError) {
-    return res.status(500).json({ error: '기관 수정 중 오류가 발생했습니다.' });
-  }
-
-  res.json({
-    message: '기관이 성공적으로 수정되었습니다.',
-    organization: updatedOrg
-  });
 });
 
 // 관리자 - 기관 도메인 삭제
@@ -841,6 +900,24 @@ async function initializeJbnuDomain() {
   }
 }
 
+// Supabase 연결 테스트 함수
+async function testSupabaseConnection() {
+  try {
+    const { data, error } = await supabase.from('organizations').select('count').limit(1);
+    
+    if (error) {
+      console.error('Supabase 연결 테스트 실패:', error.message);
+      return false;
+    }
+    
+    console.log('Supabase 연결 테스트 성공');
+    return true;
+  } catch (error) {
+    console.error('Supabase 연결 테스트 중 예외 발생:', error.message);
+    return false;
+  }
+}
+
 // 서버 시작
 app.listen(PORT, async () => {
   console.log(`서버가 포트 ${PORT}에서 실행 중입니다.`);
@@ -851,6 +928,13 @@ app.listen(PORT, async () => {
   console.log('- SUPABASE_URL:', process.env.SUPABASE_URL ? '설정됨' : '기본값 사용');
   console.log('- SUPABASE_ANON_KEY:', process.env.SUPABASE_ANON_KEY ? '설정됨' : '기본값 사용');
   
-  // jbnu.ac.kr 도메인 자동 등록
-  await initializeJbnuDomain();
-}); 
+  // Supabase 연결 테스트
+  const isConnected = await testSupabaseConnection();
+  if (!isConnected) {
+    console.error('경고: Supabase 연결에 실패했습니다. 환경 변수를 확인하세요.');
+    console.error('SUPABASE_URL과 SUPABASE_ANON_KEY가 올바르게 설정되었는지 확인하세요.');
+  } else {
+    // jbnu.ac.kr 도메인 자동 등록
+    await initializeJbnuDomain();
+  }
+});

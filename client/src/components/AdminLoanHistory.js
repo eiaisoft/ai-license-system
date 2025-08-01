@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import ErrorMessage from './ErrorMessage';
 
 function AdminLoanHistory({ user }) {
   const [loans, setLoans] = useState([]);
@@ -204,4 +205,4 @@ function AdminLoanHistory({ user }) {
   );
 }
 
-export default AdminLoanHistory; 
+export default AdminLoanHistory;
