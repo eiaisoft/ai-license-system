@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-// axios 기본 설정
-axios.defaults.baseURL = 'http://localhost:3000';
-
 function AdminOrganizations({ user }) {
   const [organizations, setOrganizations] = useState([]);
   const [loading, setLoading] = useState(true);
