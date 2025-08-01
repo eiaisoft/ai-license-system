@@ -36,10 +36,10 @@ function ChangePassword({ user, onPasswordChanged }) {
 
     try {
       const token = localStorage.getItem('token');
-      // eslint-disable-next-line no-undef
+      const { currentPassword, newPassword } = formData;
       await axios.post('/api/auth/change-password', {
-        currentPassword: formData.currentPassword,
-        newPassword: formData.newPassword
+        currentPassword,
+        newPassword
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
