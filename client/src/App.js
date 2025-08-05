@@ -7,6 +7,7 @@ import ChangePassword from './components/ChangePassword';
 import AdminHome from './components/AdminHome';
 import AdminLicenseList from './components/AdminLicenseList';
 import AdminOrganizations from './components/AdminOrganizations';
+import AdminLoanManagement from './components/AdminLoanManagement';
 import './App.css';
 
 function App() {
@@ -79,6 +80,10 @@ function App() {
               <Route 
                 path="/admin/organizations" 
                 element={user && user.role === 'admin' ? <AdminOrganizations user={user} /> : <Navigate to="/" />} 
+              />
+              <Route 
+                path="/admin/loans" 
+                element={user && user.role === 'admin' ? <AdminLoanManagement user={user} /> : <Navigate to="/" />} 
               />
               <Route 
                 path="/login" 

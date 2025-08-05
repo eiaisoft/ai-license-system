@@ -11,9 +11,11 @@ function Login({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const [showFirstLogin, setShowFirstLogin] = useState(false);
   const [firstLoginData, setFirstLoginData] = useState({
-    name: '',
     email: '',
-    organization_id: ''
+    organization_id: '',
+    name: '',
+    password: '',
+    confirmPassword: ''
   });
   const [organizations, setOrganizations] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
@@ -121,11 +123,25 @@ function Login({ onLogin }) {
     setError('');
     setLoading(true);
 
+    // 비밀번호 확인 검증
+    if (firstLoginData.password !== firstLoginData.confirmPassword) {
+      setError('비밀번호가 일치하지 않습니다.');
+      setLoading(false);
+      return;
+    }
+
+    if (firstLoginData.password.length < 6) {
+      setError('비밀번호는 최소 6자 이상이어야 합니다.');
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await axios.post('/api/auth/first-login', firstLoginData);
-      alert(`계정이 생성되었습니다!\n임시 비밀번호: ${response.data.tempPassword}\n이 비밀번호로 로그인해주세요.`);
+      alert(`계정이 성공적으로 생성되었습니다!\n설정한 비밀번호로 로그인하세요.`);
       setShowFirstLogin(false);
       setFormData({ email: firstLoginData.email, password: '' });
+      setShowPassword(true);
     } catch (err) {
       console.log('계정 생성 오류:', err.message, err.response?.data);
       setError(err.response?.data?.error || '계정 생성 중 오류가 발생했습니다.');
@@ -187,7 +203,7 @@ function Login({ onLogin }) {
         <form onSubmit={handleFirstLogin}>
           <h4 className="text-center mb-3">최초 로그인</h4>
           <p className="text-muted text-center mb-3">
-            기관 이메일로 계정을 생성합니다.
+            기관 이메일로 계정을 생성하고 비밀번호를 설정합니다.
           </p>
 
           <div className="form-group">
@@ -234,6 +250,34 @@ function Login({ onLogin }) {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="password">비밀번호 설정</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              className="form-control"
+              value={firstLoginData.password}
+              onChange={handleFirstLoginChange}
+              placeholder="비밀번호를 입력하세요 (최소 6자)"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="confirmPassword">비밀번호 확인</label>
+            <input
+              type="password"
+              id="confirmPassword"
+              name="confirmPassword"
+              className="form-control"
+              value={firstLoginData.confirmPassword}
+              onChange={handleFirstLoginChange}
+              placeholder="비밀번호를 다시 입력하세요"
+              required
+            />
           </div>
 
           <button

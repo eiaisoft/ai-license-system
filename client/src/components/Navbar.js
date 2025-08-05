@@ -18,10 +18,13 @@ function Navbar({ user, onLogout }) {
                     <Link to="/admin">홈</Link>
                   </li>
                   <li>
+                    <Link to="/admin/organizations">기관 관리</Link>
+                  </li>
+                  <li>
                     <Link to="/admin/licenses">라이선스 관리</Link>
                   </li>
                   <li>
-                    <Link to="/admin/organizations">기관 관리</Link>
+                    <Link to="/admin/loans">대출 관리</Link>
                   </li>
                 </>
               )}

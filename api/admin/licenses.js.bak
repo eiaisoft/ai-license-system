@@ -1,0 +1,125 @@
+const { createClient } = require('@supabase/supabase-js');
+const jwt = require('jsonwebtoken');
+const { v4: uuidv4 } = require('uuid');
+
+const supabase = createClient(
+  process.env.SUPABASE_URL || 'https://dbzpvobjblvlxyxhbshl.supabase.co',
+  process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRienB2b2JqYmx2bHh5eGhic2hsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3ODg4OTcsImV4cCI6MjA2OTM2NDg5N30.JvUUUeVv3tCP1wtYmTVYShsPxJ4AdQ0fedX6nAWz1VE'
+);
+
+function authenticateToken(req) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  
+  if (!token) return null;
+  
+  try {
+    return jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-in-production');
+  } catch {
+    return null;
+  }
+}
+
+module.exports = async function handler(req, res) {
+  // CORS 설정
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  // 인증 확인
+  const user = authenticateToken(req);
+  if (!user || user.role !== 'admin') {
+    return res.status(401).json({ error: '관리자 권한이 필요합니다.' });
+  }
+
+  if (req.method === 'GET') {
+    // 라이선스 목록 조회
+    const { data: licenses, error } = await supabase
+      .from('ai_licenses')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      return res.status(500).json({ error: '라이선스 목록 조회 중 오류가 발생했습니다.' });
+    }
+
+    return res.json(licenses || []);
+  }
+
+  if (req.method === 'POST') {
+    // 라이선스 추가
+    const { name, description, total_licenses, max_loan_days, organization, license_id } = req.body;
+
+    if (!name || !total_licenses || !max_loan_days || !license_id) {
+      return res.status(400).json({ error: '필수 필드가 누락되었습니다.' });
+    }
+
+    const licenseId = uuidv4();
+    const { data: newLicense, error: insertError } = await supabase
+      .from('ai_licenses')
+      .insert([
+        {
+          id: licenseId,
+          name,
+          description: description || '',
+          organization: organization || '전북대학교',
+          license_id,
+          total_licenses: parseInt(total_licenses),
+          available_licenses: parseInt(total_licenses),
+          max_loan_days: parseInt(max_loan_days),
+          created_at: new Date().toISOString()
+        }
+      ])
+      .select()
+      .single();
+
+    if (insertError) {
+      return res.status(500).json({ error: '라이선스 추가 중 오류가 발생했습니다.' });
+    }
+
+    return res.status(201).json({
+      message: '라이선스가 성공적으로 추가되었습니다.',
+      license: newLicense
+    });
+  }
+
+  if (req.method === 'PUT') {
+    // 라이선스 수정
+    const { name, description, total_licenses, max_loan_days, organization, license_id } = req.body;
+    const { id } = req.query;
+
+    if (!name || !total_licenses || !max_loan_days || !license_id) {
+      return res.status(400).json({ error: '필수 필드가 누락되었습니다.' });
+    }
+
+    const { data: updatedLicense, error: updateError } = await supabase
+      .from('ai_licenses')
+      .update({
+        name,
+        description: description || '',
+        organization: organization || '전북대학교',
+        license_id,
+        total_licenses: parseInt(total_licenses),
+        max_loan_days: parseInt(max_loan_days),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (updateError) {
+      return res.status(500).json({ error: '라이선스 수정 중 오류가 발생했습니다.' });
+    }
+
+    return res.json({
+      message: '라이선스가 성공적으로 수정되었습니다.',
+      license: updatedLicense
+    });
+  }
+
+  return res.status(405).json({ error: 'Method not allowed' });
+};

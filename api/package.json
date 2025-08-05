@@ -1,0 +1,15 @@
+{
+  "name": "ai-license-system-api",
+  "version": "1.0.0",
+  "description": "AI License System API Routes",
+  "main": "index.js",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.53.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "uuid": "^9.0.1"
+  }
+}

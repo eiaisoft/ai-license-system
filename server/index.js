@@ -8,10 +8,12 @@ require('dotenv').config();
 
 const app = express();
 
-// CORS 설정
+// CORS 설정 - 모든 origin 허용 (개발/배포 환경 대응)
 app.use(cors({
-  origin: ['http://localhost:3001', 'http://localhost:3002'],
-  credentials: true
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json());
@@ -223,10 +225,14 @@ app.post('/api/auth/login', async (req, res) => {
 
 // 최초 로그인 API
 app.post('/api/auth/first-login', async (req, res) => {
-  const { email, organization_id, name } = req.body;
+  const { email, organization_id, name, password } = req.body;
 
-  if (!email || !organization_id || !name) {
+  if (!email || !organization_id || !name || !password) {
     return res.status(400).json({ error: '모든 필드를 입력해주세요.' });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({ error: '비밀번호는 최소 6자 이상이어야 합니다.' });
   }
 
   // 기관 메일 도메인 확인
@@ -255,10 +261,8 @@ app.post('/api/auth/first-login', async (req, res) => {
     return res.status(400).json({ error: '이미 등록된 이메일입니다.' });
   }
 
-  // 임시 비밀번호 생성 (이메일 도메인 기반)
-  const emailDomain = email.split('@')[1];
-  const tempPassword = emailDomain.replace(/[^a-zA-Z0-9]/g, '') + '123';
-  const hashedPassword = await bcrypt.hash(tempPassword, 10);
+  // 사용자가 입력한 비밀번호를 해시화
+  const hashedPassword = await bcrypt.hash(password, 10);
   const userId = uuidv4();
 
   const { data: insertedUser, error: insertError } = await supabase
@@ -270,7 +274,7 @@ app.post('/api/auth/first-login', async (req, res) => {
         name,
         email,
         password: hashedPassword,
-        is_first_login: true
+        is_first_login: false  // 비밀번호를 직접 설정했으므로 false로 설정
       }
     ]);
 
@@ -279,7 +283,7 @@ app.post('/api/auth/first-login', async (req, res) => {
   }
 
   const token = jwt.sign(
-    { id: userId, email, organization_id, role: 'user', isFirstLogin: true },
+    { id: userId, email, organization_id, role: 'user', isFirstLogin: false },
     process.env.JWT_SECRET || 'your-secret-key-change-in-production',
     { expiresIn: '24h' }
   );
@@ -292,9 +296,9 @@ app.post('/api/auth/first-login', async (req, res) => {
       email,
       role: 'user',
       organization_id,
-      isFirstLogin: true
+      isFirstLogin: false
     },
-    tempPassword: tempPassword
+    message: '계정이 성공적으로 생성되었습니다. 설정한 비밀번호로 로그인하세요.'
   });
 });
 
@@ -629,7 +633,7 @@ app.delete('/api/admin/loans/:loanId', authenticateToken, requireAdmin, async (r
 });
 
 // 라이선스 반납
-app.post('/api/loans/:loanId/return', authenticateToken, async (req, res) => {
+app.post('/api/licenses/:loanId/return', authenticateToken, async (req, res) => {
   const { loanId } = req.params;
   const { userId } = req.user;
 
@@ -918,23 +922,39 @@ async function testSupabaseConnection() {
   }
 }
 
-// 서버 시작
-app.listen(PORT, async () => {
-  console.log(`서버가 포트 ${PORT}에서 실행 중입니다.`);
-  
-  // 환경 변수 확인 로그
-  console.log('환경 변수 확인:');
-  console.log('- JWT_SECRET:', process.env.JWT_SECRET ? '설정됨' : '기본값 사용');
-  console.log('- SUPABASE_URL:', process.env.SUPABASE_URL ? '설정됨' : '기본값 사용');
-  console.log('- SUPABASE_ANON_KEY:', process.env.SUPABASE_ANON_KEY ? '설정됨' : '기본값 사용');
-  
-  // Supabase 연결 테스트
-  const isConnected = await testSupabaseConnection();
-  if (!isConnected) {
-    console.error('경고: Supabase 연결에 실패했습니다. 환경 변수를 확인하세요.');
-    console.error('SUPABASE_URL과 SUPABASE_ANON_KEY가 올바르게 설정되었는지 확인하세요.');
-  } else {
-    // jbnu.ac.kr 도메인 자동 등록
-    await initializeJbnuDomain();
-  }
-});
+// 서버 시작 부분을 환경에 따라 조건부로 실행
+if (process.env.NODE_ENV !== 'production') {
+  // 로컬 개발 환경에서만 서버 시작
+  app.listen(PORT, async () => {
+    console.log(`서버가 포트 ${PORT}에서 실행 중입니다.`);
+    
+    // 환경 변수 확인 로그
+    console.log('환경 변수 확인:');
+    console.log('- JWT_SECRET:', process.env.JWT_SECRET ? '설정됨' : '기본값 사용');
+    console.log('- SUPABASE_URL:', process.env.SUPABASE_URL ? '설정됨' : '기본값 사용');
+    console.log('- SUPABASE_ANON_KEY:', process.env.SUPABASE_ANON_KEY ? '설정됨' : '기본값 사용');
+    
+    // Supabase 연결 테스트
+    const isConnected = await testSupabaseConnection();
+    if (!isConnected) {
+      console.error('경고: Supabase 연결에 실패했습니다. 환경 변수를 확인하세요.');
+      console.error('SUPABASE_URL과 SUPABASE_ANON_KEY가 올바르게 설정되었는지 확인하세요.');
+    } else {
+      // jbnu.ac.kr 도메인 자동 등록
+      await initializeJbnuDomain();
+    }
+  });
+} else {
+  // Vercel Functions에서 초기화
+  (async () => {
+    console.log('Vercel 환경에서 서버 초기화 중...');
+    const isConnected = await testSupabaseConnection();
+    if (isConnected) {
+      await initializeJbnuDomain();
+      console.log('Vercel 환경 초기화 완료');
+    }
+  })();
+}
+
+// Vercel Functions를 위한 export
+module.exports = app;

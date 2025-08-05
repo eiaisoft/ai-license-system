@@ -1,11 +1,59 @@
 {
-  "buildCommand": "cd client && npm install && npm run build",
+  "version": 2,
+  "buildCommand": "cd client && npm run build",
   "outputDirectory": "client/build",
-  "installCommand": "cd client && npm install",
+  "installCommand": "npm install && cd client && npm install && cd ../api && npm install",
+  "functions": {
+    "api/index.js": {
+      "runtime": "@vercel/node@3.0.0"
+    },
+    "api/auth/admin-login.js": {
+      "runtime": "@vercel/node@3.0.0"
+    },
+    "api/auth/check-domain.js": {
+      "runtime": "@vercel/node@3.0.0"
+    },
+    "api/auth/login.js": {
+      "runtime": "@vercel/node@3.0.0"
+    },
+    "api/auth/register.js": {
+      "runtime": "@vercel/node@3.0.0"
+    },
+    "api/auth/change-password.js": {
+      "runtime": "@vercel/node@3.0.0"
+    },
+    "api/organizations/index.js": {
+      "runtime": "@vercel/node@3.0.0"
+    }
+  },
   "rewrites": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "source": "/api/auth/admin-login",
+      "destination": "/api/auth/admin-login.js"
+    },
+    {
+      "source": "/api/auth/check-domain",
+      "destination": "/api/auth/check-domain.js"
+    },
+    {
+      "source": "/api/auth/login",
+      "destination": "/api/auth/login.js"
+    },
+    {
+      "source": "/api/auth/register",
+      "destination": "/api/auth/register.js"
+    },
+    {
+      "source": "/api/auth/change-password",
+      "destination": "/api/auth/change-password.js"
+    },
+    {
+      "source": "/api/organizations",
+      "destination": "/api/organizations/index.js"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index.js"
     }
   ]
 }
