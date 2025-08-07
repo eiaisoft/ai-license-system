@@ -68,17 +68,13 @@ app.use('/api/admin/licenses', authenticateToken, requireAdmin, require('./admin
 app.get('/api/licenses', authenticateToken, async (req, res) => {
   try {
     const { organization_id } = req.user;
+    console.log('=== 라이선스 조회 시작 ===');
     console.log('사용자 organization_id:', organization_id);
     
-    // 조직 정보와 함께 라이선스 조회
+    // 먼저 조직 정보 없이 라이선스만 조회
     const { data: licenses, error } = await supabase
       .from('ai_licenses')
-      .select(`
-        *,
-        organizations (
-          name
-        )
-      `)
+      .select('*')
       .eq('organization_id', organization_id);
 
     if (error) {
@@ -86,6 +82,7 @@ app.get('/api/licenses', authenticateToken, async (req, res) => {
       return res.status(500).json({ error: '데이터베이스 오류가 발생했습니다.' });
     }
 
+    console.log('조회된 라이선스 개수:', licenses?.length || 0);
     console.log('조회된 라이선스 원본 데이터:', JSON.stringify(licenses, null, 2));
 
     // 모든 라이선스를 표시하되, 필드명 매핑 적용
@@ -102,7 +99,7 @@ app.get('/api/licenses', authenticateToken, async (req, res) => {
         available_count: finalAvailable,
         // 호환성을 위한 추가 필드
         total_licenses: license.total_count || license.total_licenses || 0,
-        organization_name: license.organizations?.name || license.organization || '전북대학교',
+        organization_name: license.organization || '전북대학교',
         // 관리자가 입력한 라이선스 ID 사용
         display_license_id: license.license_id || license.id
       };
@@ -110,6 +107,7 @@ app.get('/api/licenses', authenticateToken, async (req, res) => {
 
     console.log('매핑된 라이선스 데이터:', JSON.stringify(mappedLicenses, null, 2));
     console.log(`총 ${mappedLicenses.length}개의 라이선스 반환`);
+    console.log('=== 라이선스 조회 완료 ===');
     
     res.json(mappedLicenses);
   } catch (error) {

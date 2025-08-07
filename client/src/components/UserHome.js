@@ -35,12 +35,22 @@ function UserHome({ user }) {
       const loans = loansResponse.data;
       const activeLoans = loans.filter(loan => loan.status === 'active');
 
+      console.log('홈 화면 - 받은 라이선스 데이터:', licenses);
+      console.log('홈 화면 - 받은 대출 데이터:', loans);
+
+      // 사용 가능한 라이선스 개수 계산 (available_count 또는 available_licenses > 0)
+      const availableLicensesCount = licenses.filter(license => {
+        const available = license.available_licenses || license.available_count || 0;
+        return available > 0;
+      }).length;
+
       setStats({
-        availableLicenses: licenses.filter(license => license.available_licenses > 0).length,
+        availableLicenses: availableLicensesCount,
         myActiveLoans: activeLoans.length,
         totalLoans: loans.length
       });
 
+      // 모든 라이선스를 표시 (사용 가능 여부와 관계없이)
       setRecentLicenses(licenses.slice(0, 3)); // 최근 3개 라이선스
       setMyActiveLoans(activeLoans.slice(0, 3)); // 최근 3개 활성 대출
 
@@ -121,19 +131,22 @@ function UserHome({ user }) {
                 <p className="text-muted text-center">사용 가능한 라이선스가 없습니다.</p>
               ) : (
                 <div className="list-group list-group-flush">
-                  {recentLicenses.map(license => (
-                    <div key={license.id} className="list-group-item d-flex justify-content-between align-items-center">
-                      <div>
-                        <h6 className="mb-1">{license.name}</h6>
-                        <small className="text-muted">{license.description}</small>
+                  {recentLicenses.map(license => {
+                    const available = license.available_licenses || license.available_count || 0;
+                    return (
+                      <div key={license.id} className="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                          <h6 className="mb-1">{license.name}</h6>
+                          <small className="text-muted">{license.description}</small>
+                        </div>
+                        <div className="text-center">
+                          <span className={`badge rounded-pill ${available > 0 ? 'bg-primary' : 'bg-secondary'}`}>
+                            {available}개 사용가능
+                          </span>
+                        </div>
                       </div>
-                      <div className="text-center">
-                        <span className="badge bg-primary rounded-pill">
-                          {license.available_licenses}개 사용가능
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -200,9 +213,9 @@ function UserHome({ user }) {
                   </Link>
                 </div>
                 <div className="col-md-3">
-                  <a href="mailto:support@eiaisoft.com" className="btn btn-outline-info w-100 mb-2">
-                    <i className="fas fa-question-circle me-2"></i>
-                    도움말
+                  <a href="/logout" className="btn btn-outline-danger w-100 mb-2">
+                    <i className="fas fa-sign-out-alt me-2"></i>
+                    로그아웃
                   </a>
                 </div>
               </div>
