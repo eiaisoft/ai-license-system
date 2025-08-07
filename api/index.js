@@ -82,7 +82,7 @@ app.get('/api/licenses', authenticateToken, async (req, res) => {
 
     console.log('조회된 라이선스 원본 데이터:', JSON.stringify(licenses, null, 2));
 
-    // 관리자 페이지와 호환성을 위해 필드명 매핑
+    // 모든 라이선스를 표시하되, 필드명 매핑 적용
     const mappedLicenses = (licenses || []).map(license => {
       const availableCount = license.available_count || 0;
       const availableLicenses = license.available_licenses || 0;
@@ -92,11 +92,17 @@ app.get('/api/licenses', authenticateToken, async (req, res) => {
       
       return {
         ...license,
-        available_licenses: finalAvailable
+        available_licenses: finalAvailable,
+        available_count: finalAvailable,
+        // 호환성을 위한 추가 필드
+        total_licenses: license.total_licenses || license.total_count || 0,
+        organization_name: license.organization_name || '전북대학교'
       };
     });
 
     console.log('매핑된 라이선스 데이터:', JSON.stringify(mappedLicenses, null, 2));
+    console.log(`총 ${mappedLicenses.length}개의 라이선스 반환`);
+    
     res.json(mappedLicenses);
   } catch (error) {
     console.error('라이선스 목록 조회 오류:', error);
