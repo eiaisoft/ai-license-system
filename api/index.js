@@ -78,7 +78,13 @@ app.get('/api/licenses', authenticateToken, async (req, res) => {
       return res.status(500).json({ error: '데이터베이스 오류가 발생했습니다.' });
     }
 
-    res.json(licenses || []);
+    // 관리자 페이지와 호환성을 위해 필드명 매핑
+    const mappedLicenses = (licenses || []).map(license => ({
+      ...license,
+      available_licenses: license.available_count || license.available_licenses || 0
+    }));
+
+    res.json(mappedLicenses);
   } catch (error) {
     console.error('라이선스 목록 조회 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
@@ -103,7 +109,7 @@ app.post('/api/licenses/:id/loan', authenticateToken, async (req, res) => {
     }
 
     // 사용 가능한 라이선스 확인
-    if (license.available_licenses <= 0) {
+    if ((license.available_count || license.available_licenses || 0) <= 0) {
       return res.status(400).json({ error: '사용 가능한 라이선스가 없습니다.' });
     }
 
@@ -147,9 +153,13 @@ app.post('/api/licenses/:id/loan', authenticateToken, async (req, res) => {
     }
 
     // 사용 가능한 라이선스 수 감소
+    const currentAvailable = license.available_count || license.available_licenses || 0;
     const { error: updateError } = await supabase
       .from('ai_licenses')
-      .update({ available_licenses: license.available_licenses - 1 })
+      .update({ 
+        available_count: currentAvailable - 1,
+        available_licenses: currentAvailable - 1  // 호환성 유지
+      })
       .eq('id', licenseId);
 
     if (updateError) {
@@ -208,7 +218,7 @@ app.post('/api/licenses/:id/return', authenticateToken, async (req, res) => {
     // 라이선스 정보 조회
     const { data: license, error: licenseError } = await supabase
       .from('ai_licenses')
-      .select('available_licenses')
+      .select('available_count, available_licenses')
       .eq('id', licenseId)
       .single();
 
@@ -218,9 +228,13 @@ app.post('/api/licenses/:id/return', authenticateToken, async (req, res) => {
     }
 
     // 사용 가능한 라이선스 수 증가
+    const currentAvailable = license.available_count || license.available_licenses || 0;
     const { error: updateLicenseError } = await supabase
       .from('ai_licenses')
-      .update({ available_licenses: license.available_licenses + 1 })
+      .update({ 
+        available_count: currentAvailable + 1,
+        available_licenses: currentAvailable + 1  // 호환성 유지
+      })
       .eq('id', licenseId);
 
     if (updateLicenseError) {
