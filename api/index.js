@@ -27,14 +27,29 @@ function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
   
+  console.log('토큰 인증 시도:', {
+    hasAuthHeader: !!authHeader,
+    hasToken: !!token,
+    tokenStart: token ? token.substring(0, 20) + '...' : 'none'
+  });
+  
   if (!token) {
+    console.log('토큰이 없음');
     return res.status(401).json({ error: '토큰이 필요합니다.' });
   }
   
   jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-in-production', (err, user) => {
     if (err) {
+      console.log('토큰 검증 실패:', err.message);
       return res.status(403).json({ error: '유효하지 않은 토큰입니다.' });
     }
+    
+    console.log('토큰 검증 성공:', {
+      userId: user.id,
+      email: user.email,
+      organization_id: user.organization_id
+    });
+    
     req.user = user;
     next();
   });

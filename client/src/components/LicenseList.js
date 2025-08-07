@@ -19,17 +19,41 @@ function LicenseList({ user }) {
   const fetchLicenses = async () => {
     try {
       const token = localStorage.getItem('token');
+      
+      if (!token) {
+        setError('로그인이 필요합니다. 다시 로그인해주세요.');
+        setLoading(false);
+        return;
+      }
+
+      console.log('토큰으로 라이선스 조회 시작:', token.substring(0, 20) + '...');
+      
       const response = await axios.get('/api/licenses', {
         headers: { Authorization: `Bearer ${token}` }
       });
+      
       console.log('받은 라이선스 데이터:', response.data);
       console.log('라이선스 개수:', response.data.length);
       
       // 모든 라이선스 표시 (필터링 완전 제거)
       setLicenses(response.data || []);
+      setError(''); // 성공 시 에러 메시지 초기화
     } catch (err) {
       console.error('라이선스 조회 오류:', err);
-      setError('라이선스 목록을 불러오는 중 오류가 발생했습니다.');
+      
+      if (err.response?.status === 401) {
+        setError('인증이 만료되었습니다. 다시 로그인해주세요.');
+        // 토큰 제거
+        localStorage.removeItem('token');
+        // 페이지 새로고침하여 로그인 페이지로 이동
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else if (err.response?.status === 403) {
+        setError('접근 권한이 없습니다.');
+      } else {
+        setError(err.response?.data?.error || '라이선스 목록을 불러오는 중 오류가 발생했습니다.');
+      }
     } finally {
       setLoading(false);
     }
