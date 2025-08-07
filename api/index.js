@@ -68,6 +68,8 @@ app.use('/api/admin/licenses', authenticateToken, requireAdmin, require('./admin
 app.get('/api/licenses', authenticateToken, async (req, res) => {
   try {
     const { organization_id } = req.user;
+    console.log('사용자 organization_id:', organization_id);
+    
     const { data: licenses, error } = await supabase
       .from('ai_licenses')
       .select('*')
@@ -78,12 +80,23 @@ app.get('/api/licenses', authenticateToken, async (req, res) => {
       return res.status(500).json({ error: '데이터베이스 오류가 발생했습니다.' });
     }
 
-    // 관리자 페이지와 호환성을 위해 필드명 매핑
-    const mappedLicenses = (licenses || []).map(license => ({
-      ...license,
-      available_licenses: license.available_count || license.available_licenses || 0
-    }));
+    console.log('조회된 라이선스 원본 데이터:', JSON.stringify(licenses, null, 2));
 
+    // 관리자 페이지와 호환성을 위해 필드명 매핑
+    const mappedLicenses = (licenses || []).map(license => {
+      const availableCount = license.available_count || 0;
+      const availableLicenses = license.available_licenses || 0;
+      const finalAvailable = Math.max(availableCount, availableLicenses);
+      
+      console.log(`라이선스 ${license.name}: available_count=${availableCount}, available_licenses=${availableLicenses}, final=${finalAvailable}`);
+      
+      return {
+        ...license,
+        available_licenses: finalAvailable
+      };
+    });
+
+    console.log('매핑된 라이선스 데이터:', JSON.stringify(mappedLicenses, null, 2));
     res.json(mappedLicenses);
   } catch (error) {
     console.error('라이선스 목록 조회 오류:', error);
