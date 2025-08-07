@@ -291,6 +291,49 @@ app.get('/api/user/loans', authenticateToken, async (req, res) => {
   }
 });
 
+// /api/loans 엔드포인트 수정 (UserHome에서 사용)
+app.get('/api/loans', authenticateToken, async (req, res) => {
+  try {
+    const { id: userId } = req.user;
+
+    const { data: loans, error } = await supabase
+      .from('license_loans')
+      .select(`
+        id,
+        loan_date,
+        return_date,
+        status,
+        ai_licenses!inner (
+          id,
+          name,
+          description
+        )
+      `)
+      .eq('user_id', userId)
+      .order('loan_date', { ascending: false });
+
+    if (error) {
+      console.error('대출 내역 조회 오류:', error);
+      return res.status(500).json({ error: '데이터베이스 오류가 발생했습니다.' });
+    }
+
+    // 데이터 형식을 클라이언트에서 기대하는 형태로 변환
+    const formattedLoans = loans?.map(loan => ({
+      id: loan.id,
+      license_name: loan.ai_licenses.name,
+      license_id: loan.ai_licenses.id,
+      loan_date: loan.loan_date,
+      return_date: loan.return_date,
+      status: loan.status
+    })) || [];
+
+    res.json(formattedLoans);
+  } catch (error) {
+    console.error('대출 내역 조회 오류:', error);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+  }
+});
+
 // /api/loans 엔드포인트 추가 (UserHome에서 사용)
 app.get('/api/loans', authenticateToken, async (req, res) => {
   try {
