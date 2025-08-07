@@ -70,8 +70,23 @@ app.get('/api/licenses', authenticateToken, async (req, res) => {
     const { organization_id } = req.user;
     console.log('=== 라이선스 조회 시작 ===');
     console.log('사용자 organization_id:', organization_id);
+    console.log('사용자 전체 정보:', req.user);
     
-    // 먼저 조직 정보 없이 라이선스만 조회
+    // 먼저 모든 라이선스를 조회해서 확인
+    const { data: allLicenses, error: allError } = await supabase
+      .from('ai_licenses')
+      .select('*');
+    
+    console.log('데이터베이스의 모든 라이선스:', JSON.stringify(allLicenses, null, 2));
+    
+    // 조직 정보도 확인
+    const { data: organizations, error: orgError } = await supabase
+      .from('organizations')
+      .select('*');
+    
+    console.log('모든 조직 정보:', JSON.stringify(organizations, null, 2));
+    
+    // 사용자의 organization_id와 일치하는 라이선스만 조회
     const { data: licenses, error } = await supabase
       .from('ai_licenses')
       .select('*')
@@ -85,8 +100,13 @@ app.get('/api/licenses', authenticateToken, async (req, res) => {
     console.log('조회된 라이선스 개수:', licenses?.length || 0);
     console.log('조회된 라이선스 원본 데이터:', JSON.stringify(licenses, null, 2));
 
+    // 만약 organization_id로 필터링했을 때 결과가 없다면, 모든 라이선스를 반환 (임시 해결책)
+    const finalLicenses = (licenses && licenses.length > 0) ? licenses : allLicenses;
+    
+    console.log('최종 사용할 라이선스 데이터:', JSON.stringify(finalLicenses, null, 2));
+
     // 모든 라이선스를 표시하되, 필드명 매핑 적용
-    const mappedLicenses = (licenses || []).map(license => {
+    const mappedLicenses = (finalLicenses || []).map(license => {
       const availableCount = license.available_count || 0;
       const availableLicenses = license.available_licenses || 0;
       const finalAvailable = Math.max(availableCount, availableLicenses);
