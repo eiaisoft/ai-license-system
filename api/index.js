@@ -117,10 +117,14 @@ app.get('/api/licenses', authenticateToken, async (req, res) => {
 });
 
 // 라이선스 대출
+// 라이선스 대출
 app.post('/api/licenses/:id/loan', authenticateToken, async (req, res) => {
   try {
     const { id: licenseId } = req.params;
     const { id: userId, organization_id } = req.user;
+    const { loan_start_date, loan_end_date } = req.body;
+
+    console.log('대출 신청 요청:', { licenseId, userId, loan_start_date, loan_end_date });
 
     // 라이선스 정보 조회
     const { data: license, error: licenseError } = await supabase
@@ -156,10 +160,21 @@ app.post('/api/licenses/:id/loan', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: '이미 대출 중인 라이선스입니다.' });
     }
 
+    // 날짜 처리
+    let loanDate, returnDate;
+    
+    if (loan_start_date && loan_end_date) {
+      // 사용자가 지정한 날짜 사용
+      loanDate = new Date(loan_start_date);
+      returnDate = new Date(loan_end_date);
+    } else {
+      // 기본값: 오늘부터 최대 대출 기간
+      loanDate = new Date();
+      returnDate = new Date(loanDate.getTime() + (license.max_loan_days * 24 * 60 * 60 * 1000));
+    }
+
     // 대출 기록 생성
     const loanId = uuidv4();
-    const loanDate = new Date();
-    const returnDate = new Date(loanDate.getTime() + (license.max_loan_days * 24 * 60 * 60 * 1000));
 
     const { error: insertError } = await supabase
       .from('license_loans')
@@ -191,6 +206,8 @@ app.post('/api/licenses/:id/loan', authenticateToken, async (req, res) => {
       console.error('라이선스 업데이트 오류:', updateError);
       return res.status(500).json({ error: '라이선스 업데이트 중 오류가 발생했습니다.' });
     }
+
+    console.log('대출 신청 완료:', { loanId, loanDate, returnDate });
 
     res.json({
       message: '라이선스 대출이 완료되었습니다.',
