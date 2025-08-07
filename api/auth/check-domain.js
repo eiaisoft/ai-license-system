@@ -57,33 +57,16 @@ module.exports = async (req, res) => {
       }
       
       if (users && users.length > 0) {
-        const user = users[0];
-        const token = jwt.sign(
-          { 
-            id: user.id, 
-            email: user.email, 
-            organization_id: user.organization_id, 
-            role: 'user', 
-            isFirstLogin: user.is_first_login === 1 
-          },
-          process.env.JWT_SECRET || 'your-secret-key-change-in-production',
-          { expiresIn: '24h' }
-        );
-        
+        // 기존 사용자 존재 - 비밀번호 확인이 필요하므로 일반 로그인으로 처리
         return res.json({
-          token,
-          user: { 
-            id: user.id, 
-            name: user.name, 
-            email: user.email, 
-            role: 'user', 
-            organization_id: user.organization_id, 
-            isFirstLogin: user.is_first_login === 1 
-          },
-          autoLogin: true
+          userExists: true,
+          autoLogin: false,
+          message: '기존 사용자입니다. 비밀번호를 입력하여 로그인하세요.'
         });
       } else {
+        // 신규 사용자 - 계정 생성 필요
         return res.json({ 
+          userExists: false,
           organization_id: orgs[0].id,
           organization_name: orgs[0].name,
           autoLogin: false,

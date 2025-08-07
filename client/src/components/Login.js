@@ -1,150 +1,138 @@
 import React, { useState } from 'react';
-import axios from 'axios';
-import ErrorMessage from './ErrorMessage';
 
-function Login({ onLogin }) {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  });
+const Login = ({ onLogin }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showFirstLogin, setShowFirstLogin] = useState(false);
-  const [firstLoginData, setFirstLoginData] = useState({
-    email: '',
-    organization_id: '',
-    name: '',
-    password: '',
-    confirmPassword: ''
-  });
-  const [organizations, setOrganizations] = useState([]);
-  const [showPassword, setShowPassword] = useState(false);
-  const [autoLoginEnabled, setAutoLoginEnabled] = useState(false);
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  // 이메일 입력 시 도메인 확인
-  const handleEmailChange = async (e) => {
-    const emailValue = e.target.value;
-    setFormData({
-      ...formData,
-      email: emailValue
-    });
-    
-    // 관리자 이메일인 경우 바로 비밀번호 입력 표시
-    if (emailValue === 'admin@eiaisoft.com') {
-      setShowPassword(true);
-      setAutoLoginEnabled(false);
-      return;
-    }
-    
-    if (emailValue.includes('@') && emailValue.split('@')[1]) {
-      try {
-        const response = await axios.post('/api/auth/check-domain', { email: emailValue });
-        
-        if (response.data.autoLogin) {
-          // 자동 로그인 성공
-          onLogin(response.data.user, response.data.token);
-        } else if (response.data.organization_id) {
-          // 최초 로그인 필요
-          setShowPassword(true);
-          setAutoLoginEnabled(false);
-          setFirstLoginData({
-            ...firstLoginData,
-            email: emailValue,
-            organization_id: response.data.organization_id
-          });
-        } else {
-          // 일반 로그인 필요
-          setShowPassword(true);
-          setAutoLoginEnabled(false);
-        }
-      } catch (error) {
-        console.log('도메인 확인 실패:', error.message);
-        // 일반 로그인 필요
-        setShowPassword(true);
-        setAutoLoginEnabled(false);
-      }
-    }
-  };
-
-  const handleFirstLoginChange = (e) => {
-    setFirstLoginData({
-      ...firstLoginData,
-      [e.target.name]: e.target.value
-    });
-  };
+  const API_BASE_URL = process.env.NODE_ENV === 'production' 
+    ? '' 
+    : 'http://localhost:3002';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
+    console.log('로그인 시도:', { email, API_BASE_URL });
+
     try {
-      // 관리자 이메일인지 확인
-      if (formData.email === 'admin@eiaisoft.com') {
-        const response = await axios.post('/api/auth/admin-login', formData);
-        onLogin(response.data.user, response.data.token);
-      } else {
-        const response = await axios.post('/api/auth/login', formData);
-        onLogin(response.data.user, response.data.token);
-      }
-    } catch (err) {
-      console.log('로그인 오류:', err.message, err.response?.data);
-      if (err.response?.status === 401) {
-        if (formData.email === 'admin@eiaisoft.com') {
-          setError('관리자 비밀번호가 올바르지 않습니다.');
-        } else {
-          setError('이메일 또는 비밀번호가 올바르지 않습니다. 최초 로그인이신가요?');
-          setShowFirstLogin(true);
-          // 기관 목록 가져오기
-          try {
-            const orgResponse = await axios.get('/api/organizations');
-            setOrganizations(orgResponse.data);
-          } catch (orgErr) {
-            console.error('기관 목록 조회 실패:', orgErr);
+      // jbnu.ac.kr 도메인 처리
+      if (email.endsWith('@jbnu.ac.kr')) {
+        console.log('jbnu.ac.kr 도메인 감지됨');
+        
+        try {
+          // 기존 사용자 확인
+          console.log('도메인 체크 API 호출 중...');
+          const checkResponse = await fetch(`${API_BASE_URL}/api/auth/check-domain`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email: email })
+          });
+
+          console.log('도메인 체크 응답 상태:', checkResponse.status);
+          const checkData = await checkResponse.json();
+          console.log('도메인 체크 응답 데이터:', checkData);
+
+          if (checkResponse.ok) {
+            if (checkData.userExists) {
+              console.log('기존 사용자 - 일반 로그인 시도');
+              // 기존 사용자 - 일반 로그인
+              const loginResponse = await fetch(`${API_BASE_URL}/api/auth/login`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  email: email,
+                  password: password
+                })
+              });
+
+              console.log('로그인 응답 상태:', loginResponse.status);
+              const loginData = await loginResponse.json();
+              console.log('로그인 응답 데이터:', loginData);
+
+              if (loginResponse.ok && loginData.token) {
+                console.log('로그인 성공');
+                onLogin(loginData.user, loginData.token);
+              } else {
+                console.log('로그인 실패:', loginData.error);
+                setError(loginData.error || '로그인에 실패했습니다.');
+              }
+            } else {
+              console.log('신규 사용자 - 계정 생성 시도');
+              // 신규 사용자 - 바로 계정 생성 및 로그인
+              const firstLoginResponse = await fetch(`${API_BASE_URL}/api/auth/first-login`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  email: email,
+                  password: password,
+                  name: email.split('@')[0], // 이메일 앞부분을 이름으로 사용
+                  organization_id: checkData.organization_id
+                })
+              });
+
+              console.log('계정 생성 응답 상태:', firstLoginResponse.status);
+              const firstLoginData = await firstLoginResponse.json();
+              console.log('계정 생성 응답 데이터:', firstLoginData);
+
+              if (firstLoginResponse.ok && firstLoginData.token) {
+                console.log('계정 생성 및 로그인 성공');
+                onLogin(firstLoginData.user, firstLoginData.token);
+              } else {
+                console.log('계정 생성 실패:', firstLoginData.error);
+                setError(firstLoginData.error || '계정 생성에 실패했습니다.');
+              }
+            }
+          } else {
+            console.log('도메인 체크 실패:', checkData.error);
+            setError(checkData.error || '도메인 확인에 실패했습니다.');
           }
+        } catch (domainError) {
+          console.error('도메인 확인 오류:', domainError);
+          setError('서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
         }
       } else {
-        setError(err.response?.data?.error || '로그인 중 오류가 발생했습니다.');
+        console.log('일반 도메인 - 일반 로그인 시도');
+        // 일반 로그인
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: email,
+              password: password
+            })
+          });
+
+          console.log('일반 로그인 응답 상태:', response.status);
+          const data = await response.json();
+          console.log('일반 로그인 응답 데이터:', data);
+
+          if (response.ok && data.token) {
+            console.log('일반 로그인 성공');
+            onLogin(data.user, data.token);
+          } else {
+            console.log('일반 로그인 실패:', data.error);
+            setError(data.error || '로그인에 실패했습니다.');
+          }
+        } catch (error) {
+          console.error('일반 로그인 오류:', error);
+          setError('서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
+        }
       }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleFirstLogin = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    // 비밀번호 확인 검증
-    if (firstLoginData.password !== firstLoginData.confirmPassword) {
-      setError('비밀번호가 일치하지 않습니다.');
-      setLoading(false);
-      return;
-    }
-
-    if (firstLoginData.password.length < 6) {
-      setError('비밀번호는 최소 6자 이상이어야 합니다.');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const response = await axios.post('/api/auth/first-login', firstLoginData);
-      alert(`계정이 성공적으로 생성되었습니다!\n설정한 비밀번호로 로그인하세요.`);
-      setShowFirstLogin(false);
-      setFormData({ email: firstLoginData.email, password: '' });
-      setShowPassword(true);
-    } catch (err) {
-      console.log('계정 생성 오류:', err.message, err.response?.data);
-      setError(err.response?.data?.error || '계정 생성 중 오류가 발생했습니다.');
+    } catch (error) {
+      console.error('전체 로그인 프로세스 오류:', error);
+      setError('로그인 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
@@ -154,153 +142,55 @@ function Login({ onLogin }) {
     <div className="card" style={{ maxWidth: '400px', margin: '50px auto' }}>
       <h2 className="text-center mb-3">AI 라이선스 대출 시스템</h2>
       
-      <ErrorMessage message={error} />
-
-      {!showFirstLogin ? (
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="email">기관 이메일</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              className="form-control"
-              value={formData.email}
-              onChange={handleEmailChange}
-              placeholder="example@eiaisoft.com"
-              required
-            />
-          </div>
-
-          {showPassword && (
-            <div className="form-group">
-              <label htmlFor="password">비밀번호</label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                className="form-control"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="비밀번호를 입력하세요"
-                required
-              />
-            </div>
-          )}
-
-          {!autoLoginEnabled && showPassword && (
-            <button
-              type="submit"
-              className="btn btn-primary"
-              style={{ width: '100%' }}
-              disabled={loading}
-            >
-              {loading ? '로그인 중...' : '로그인'}
-            </button>
-          )}
-        </form>
-      ) : (
-        <form onSubmit={handleFirstLogin}>
-          <h4 className="text-center mb-3">최초 로그인</h4>
-          <p className="text-muted text-center mb-3">
-            기관 이메일로 계정을 생성하고 비밀번호를 설정합니다.
-          </p>
-
-          <div className="form-group">
-            <label htmlFor="name">이름</label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              className="form-control"
-              value={firstLoginData.name}
-              onChange={handleFirstLoginChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="firstEmail">기관 이메일</label>
-            <input
-              type="email"
-              id="firstEmail"
-              name="email"
-              className="form-control"
-              value={firstLoginData.email}
-              onChange={handleFirstLoginChange}
-              placeholder="example@eiaisoft.com"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="organization_id">소속 기관</label>
-            <select
-              id="organization_id"
-              name="organization_id"
-              className="form-control"
-              value={firstLoginData.organization_id}
-              onChange={handleFirstLoginChange}
-              required
-            >
-              <option value="">기관을 선택하세요</option>
-              {organizations.map(org => (
-                <option key={org.id} value={org.id}>
-                  {org.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="password">비밀번호 설정</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              className="form-control"
-              value={firstLoginData.password}
-              onChange={handleFirstLoginChange}
-              placeholder="비밀번호를 입력하세요 (최소 6자)"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="confirmPassword">비밀번호 확인</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              className="form-control"
-              value={firstLoginData.confirmPassword}
-              onChange={handleFirstLoginChange}
-              placeholder="비밀번호를 다시 입력하세요"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="btn btn-success"
-            style={{ width: '100%' }}
-            disabled={loading}
-          >
-            {loading ? '계정 생성 중...' : '계정 생성'}
-          </button>
-
-          <button
-            type="button"
-            className="btn btn-secondary"
-            style={{ width: '100%', marginTop: '10px' }}
-            onClick={() => setShowFirstLogin(false)}
-          >
-            로그인으로 돌아가기
-          </button>
-        </form>
+      {error && (
+        <div className="alert alert-danger" role="alert">
+          {error}
+        </div>
       )}
+
+      <form onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label htmlFor="email">기관 이메일</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            className="form-control"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="example@jbnu.ac.kr"
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="password">비밀번호</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            className="form-control"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="비밀번호를 입력하세요"
+            required
+          />
+          <small className="form-text text-muted mt-2">
+            비밀번호는 최초 로그인 시 1회만 신규로 작성. 추후 이 비밀번호를 입력하여 로그인.
+          </small>
+        </div>
+
+        <button
+          type="submit"
+          className="btn btn-primary"
+          style={{ width: '100%' }}
+          disabled={loading}
+        >
+          {loading ? '로그인 중...' : '로그인'}
+        </button>
+      </form>
     </div>
   );
-}
+};
 
 export default Login;

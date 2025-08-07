@@ -9,7 +9,7 @@ function AdminOrganizations({ user }) {
   const [newOrganization, setNewOrganization] = useState({
     name: '',
     email_domain: '',
-    auto_login_enabled: false
+    auto_login_enabled: true // 기본값을 true로 변경
   });
 
   useEffect(() => {
@@ -110,7 +110,7 @@ function AdminOrganizations({ user }) {
       fetchOrganizations();
       setError('');
     } catch (err) {
-      console.error('자동 로그인 설정 변경 오류:', err);
+      console.error('로그인 허용 설정 변경 오류:', err);
       console.error('오류 응답:', err.response?.data);
       console.error('오류 상태:', err.response?.status);
       console.error('오류 헤더:', err.response?.headers);
@@ -120,7 +120,7 @@ function AdminOrganizations({ user }) {
       } else if (err.response?.status === 403) {
         setError('관리자 권한이 필요합니다.');
       } else {
-        setError(`자동 로그인 설정 변경 중 오류가 발생했습니다: ${err.response?.data?.error || err.message}`);
+        setError(`로그인 허용 설정 변경 중 오류가 발생했습니다: ${err.response?.data?.error || err.message}`);
       }
     }
   };
@@ -197,7 +197,7 @@ function AdminOrganizations({ user }) {
                       })}
                     />
                     <label className="form-check-label" htmlFor="autoLogin">
-                      자동 로그인 활성화
+                      로그인 허용
                     </label>
                   </div>
                   <div className="d-flex gap-2">
@@ -229,7 +229,7 @@ function AdminOrganizations({ user }) {
                       <tr>
                         <th>기관명</th>
                         <th>도메인</th>
-                        <th>자동 로그인</th>
+                        <th>로그인 허용</th>
                         <th>등록일</th>
                         <th>작업</th>
                       </tr>
@@ -241,10 +241,10 @@ function AdminOrganizations({ user }) {
                           <td>{org.email_domain}</td>
                           <td>
                             <button
-                              className={`btn btn-sm ${org.auto_login_enabled ? 'btn-success' : 'btn-secondary'}`}
+                              className={`btn btn-sm ${org.auto_login_enabled ? 'btn-success' : 'btn-danger'}`}
                               onClick={() => toggleAutoLogin(org.id, org.auto_login_enabled)}
                             >
-                              {org.auto_login_enabled ? '활성화' : '비활성화'}
+                              {org.auto_login_enabled ? '허용' : '차단'}
                             </button>
                           </td>
                           <td>{new Date(org.created_at).toLocaleDateString('ko-KR')}</td>

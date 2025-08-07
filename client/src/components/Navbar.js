@@ -12,10 +12,11 @@ function Navbar({ user, onLogout }) {
         <ul className="navbar-nav">
           {user ? (
             <>
-              {user.role === 'admin' && (
+              {user.role === 'admin' ? (
+                // 관리자 메뉴
                 <>
                   <li>
-                    <Link to="/admin">홈</Link>
+                    <Link to="/admin">관리자 홈</Link>
                   </li>
                   <li>
                     <Link to="/admin/organizations">기관 관리</Link>
@@ -27,10 +28,26 @@ function Navbar({ user, onLogout }) {
                     <Link to="/admin/loans">대출 관리</Link>
                   </li>
                 </>
+              ) : (
+                // 사용자 메뉴
+                <>
+                  <li>
+                    <Link to="/dashboard">홈</Link>
+                  </li>
+                  <li>
+                    <Link to="/licenses">라이선스 목록</Link>
+                  </li>
+                  <li>
+                    <Link to="/loans">내 대출 내역</Link>
+                  </li>
+                  <li>
+                    <Link to="/change-password">비밀번호 변경</Link>
+                  </li>
+                </>
               )}
               <li>
                 <span style={{ color: '#fff', padding: '5px 10px' }}>
-                  {user.name}님
+                  {user.name}님 ({user.role === 'admin' ? '관리자' : '사용자'})
                 </span>
               </li>
               <li>
@@ -50,6 +67,9 @@ function Navbar({ user, onLogout }) {
             </>
           ) : (
             <>
+              <li>
+                <Link to="/admin-login">관리자</Link>
+              </li>
               <li>
                 <Link to="/login">로그인</Link>
               </li>

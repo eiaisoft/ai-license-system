@@ -3,11 +3,15 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import './config'; // 이 줄 추가!
 import Navbar from './components/Navbar';
 import Login from './components/Login';
+import AdminLogin from './components/AdminLogin';
 import ChangePassword from './components/ChangePassword';
 import AdminHome from './components/AdminHome';
 import AdminLicenseList from './components/AdminLicenseList';
 import AdminOrganizations from './components/AdminOrganizations';
 import AdminLoanManagement from './components/AdminLoanManagement';
+import UserHome from './components/UserHome';
+import LicenseList from './components/LicenseList';
+import LoanHistory from './components/LoanHistory';
 import './App.css';
 
 function App() {
@@ -65,10 +69,19 @@ function App() {
             <ChangePassword user={user} onPasswordChanged={handlePasswordChanged} />
           ) : (
             <Routes>
+              {/* 메인 페이지 - 역할에 따라 리다이렉트 */}
               <Route 
                 path="/" 
-                element={user && user.role === 'admin' ? <AdminHome user={user} /> : <Navigate to="/login" />} 
+                element={
+                  user ? (
+                    user.role === 'admin' ? <Navigate to="/admin" /> : <Navigate to="/dashboard" />
+                  ) : (
+                    <Navigate to="/login" />
+                  )
+                } 
               />
+
+              {/* 관리자 라우트 */}
               <Route 
                 path="/admin" 
                 element={user && user.role === 'admin' ? <AdminHome user={user} /> : <Navigate to="/" />} 
@@ -85,9 +98,33 @@ function App() {
                 path="/admin/loans" 
                 element={user && user.role === 'admin' ? <AdminLoanManagement user={user} /> : <Navigate to="/" />} 
               />
+
+              {/* 사용자 라우트 */}
+              <Route 
+                path="/dashboard" 
+                element={user && user.role !== 'admin' ? <UserHome user={user} /> : <Navigate to="/" />} 
+              />
+              <Route 
+                path="/licenses" 
+                element={user && user.role !== 'admin' ? <LicenseList user={user} /> : <Navigate to="/" />} 
+              />
+              <Route 
+                path="/loans" 
+                element={user && user.role !== 'admin' ? <LoanHistory user={user} /> : <Navigate to="/" />} 
+              />
+              <Route 
+                path="/change-password" 
+                element={user ? <ChangePassword user={user} onPasswordChanged={handlePasswordChanged} /> : <Navigate to="/login" />} 
+              />
+
+              {/* 로그인 라우트 */}
               <Route 
                 path="/login" 
                 element={user ? <Navigate to="/" /> : <Login onLogin={login} />} 
+              />
+              <Route 
+                path="/admin-login" 
+                element={user ? <Navigate to="/" /> : <AdminLogin onLogin={login} />} 
               />
             </Routes>
           )}

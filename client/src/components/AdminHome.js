@@ -29,20 +29,14 @@ function AdminHome({ user }) {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      // 대출 수 조회
-      const loanResponse = await axios.get('/api/admin/loans', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      // 활성 대출 수 계산
-      const activeLoans = loanResponse.data.filter(loan => loan.status === 'active').length;
-      
+      // 대출 수는 임시로 0으로 설정 (나중에 대출 API 구현 시 추가)
       setStats({
         totalOrganizations: orgResponse.data.length,
         totalLicenses: licenseResponse.data.length,
-        totalLoans: activeLoans
+        totalLoans: 0 // 임시로 0으로 설정
       });
     } catch (err) {
+      console.error('통계 정보 로딩 오류:', err);
       setError('통계 정보를 불러오는 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
@@ -114,7 +108,7 @@ function AdminHome({ user }) {
                 <div className="card-body">
                   <div className="d-flex justify-content-between align-items-center mb-2">
                     <h5 className="card-title mb-0">대출된 라이선스</h5>
-                    <Link to="/admin/loan-management" className="btn btn-sm" style={{backgroundColor: '#e91e63', borderColor: '#e91e63', color: 'white'}}>
+                    <Link to="/admin/loans" className="btn btn-sm" style={{backgroundColor: '#e91e63', borderColor: '#e91e63', color: 'white'}}>
                       <i className="fas fa-clipboard-list me-1"></i>
                       대출 관리
                     </Link>

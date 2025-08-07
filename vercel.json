@@ -5,25 +5,37 @@
   "installCommand": "npm install && cd client && npm install && cd ../api && npm install",
   "functions": {
     "api/index.js": {
-      "runtime": "@vercel/node@3.0.0"
+      "runtime": "@vercel/node@5.3.11"
     },
     "api/auth/admin-login.js": {
-      "runtime": "@vercel/node@3.0.0"
+      "runtime": "@vercel/node@5.3.11"
     },
     "api/auth/check-domain.js": {
-      "runtime": "@vercel/node@3.0.0"
+      "runtime": "@vercel/node@5.3.11"
     },
     "api/auth/login.js": {
-      "runtime": "@vercel/node@3.0.0"
+      "runtime": "@vercel/node@5.3.11"
     },
     "api/auth/register.js": {
-      "runtime": "@vercel/node@3.0.0"
+      "runtime": "@vercel/node@5.3.11"
     },
     "api/auth/change-password.js": {
-      "runtime": "@vercel/node@3.0.0"
+      "runtime": "@vercel/node@5.3.11"
     },
     "api/organizations/index.js": {
-      "runtime": "@vercel/node@3.0.0"
+      "runtime": "@vercel/node@5.3.11"
+    },
+    "api/admin/organizations.js": {
+      "runtime": "@vercel/node@5.3.11"
+    },
+    "api/admin/organizations/[id].js": {
+      "runtime": "@vercel/node@5.3.11"
+    },
+    "api/admin/licenses.js": {
+      "runtime": "@vercel/node@5.3.11"
+    },
+    "api/admin/licenses/[id].js": {
+      "runtime": "@vercel/node@5.3.11"
     }
   },
   "rewrites": [
@@ -50,6 +62,38 @@
     {
       "source": "/api/organizations",
       "destination": "/api/organizations/index.js"
+    },
+    {
+      "source": "/api/admin/organizations/([^/]+)",
+      "destination": "/api/admin/organizations/[id].js?id=$1"
+    },
+    {
+      "source": "/api/admin/organizations",
+      "destination": "/api/admin/organizations.js"
+    },
+    {
+      "source": "/api/admin/licenses/([^/]+)",
+      "destination": "/api/admin/licenses/[id].js?id=$1"
+    },
+    {
+      "source": "/api/admin/licenses",
+      "destination": "/api/admin/licenses.js"
+    },
+    {
+      "source": "/api/loans",
+      "destination": "/api/index.js"
+    },
+    {
+      "source": "/api/licenses",
+      "destination": "/api/index.js"
+    },
+    {
+      "source": "/api/licenses/([^/]+)/loan",
+      "destination": "/api/index.js"
+    },
+    {
+      "source": "/api/licenses/([^/]+)/return",
+      "destination": "/api/index.js"
     },
     {
       "source": "/api/(.*)",

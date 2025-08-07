@@ -79,6 +79,11 @@ function requireAdmin(req, res, next) {
 // 기관 도메인 확인 및 자동 로그인 API
 app.post('/api/auth/check-domain', async (req, res) => {
   const { email } = req.body;
+  
+  if (!email) {
+    return res.status(400).json({ error: '이메일이 필요합니다.' });
+  }
+
   const domain = email.split('@')[1];
   
   const { data: orgs, error } = await supabase
@@ -101,35 +106,18 @@ app.post('/api/auth/check-domain', async (req, res) => {
     if (userError) return res.status(500).json({ error: 'DB error' });
     
     if (users && users.length > 0) {
-      // 사용자 존재 - 자동 로그인
-      const user = users[0];
-      const token = jwt.sign(
-        { 
-          id: user.id, 
-          email: user.email, 
-          organization_id: user.organization_id, 
-          role: 'user',
-          isFirstLogin: user.is_first_login === 1
-        },
-        process.env.JWT_SECRET || 'your-secret-key-change-in-production',
-        { expiresIn: '24h' }
-      );
-      
+      // 기존 사용자 존재 - 비밀번호 확인 필요
       return res.json({
-        token,
-        user: { 
-          id: user.id, 
-          name: user.name, 
-          email: user.email, 
-          role: 'user', 
-          organization_id: user.organization_id,
-          isFirstLogin: user.is_first_login === 1
-        },
-        autoLogin: true
+        userExists: true,
+        organization_id: orgs[0].id,
+        organization_name: orgs[0].name,
+        autoLogin: false,
+        message: '기존 사용자입니다. 비밀번호를 입력하여 로그인하세요.'
       });
     } else {
       // 사용자 없음 - 최초 로그인 필요
       return res.json({ 
+        userExists: false,
         organization_id: orgs[0].id,
         organization_name: orgs[0].name,
         autoLogin: false,

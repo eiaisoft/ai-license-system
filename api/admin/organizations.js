@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const { v4: uuidv4 } = require('uuid');
 const jwt = require('jsonwebtoken');
 
 const supabase = createClient(
@@ -29,7 +30,7 @@ function authenticateToken(req) {
 module.exports = async (req, res) => {
   // CORS 설정
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   
   if (req.method === 'OPTIONS') {
@@ -40,27 +41,33 @@ module.exports = async (req, res) => {
     // 인증 확인
     const user = authenticateToken(req);
     
-    // URL에서 ID 추출
-    const { id } = req.query;
-    
-    if (!id) {
-      return res.status(400).json({ error: '기관 ID가 필요합니다.' });
-    }
+    if (req.method === 'GET') {
+      // 기관 목록 조회
+      const { data: organizations, error } = await supabase
+        .from('organizations')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    if (req.method === 'PUT') {
-      // 기관 수정
-      const { name, email_domain, auto_login_enabled } = req.body;
+      if (error) {
+        return res.status(500).json({ error: '기관 목록 조회 중 오류가 발생했습니다.' });
+      }
+
+      return res.json(organizations || []);
+    }
+    
+    if (req.method === 'POST') {
+      // 기관 추가
+      const { name, email_domain, auto_login_enabled = true } = req.body;
 
       if (!name || !email_domain) {
         return res.status(400).json({ error: '기관명과 이메일 도메인을 입력해주세요.' });
       }
 
-      // 다른 기관과 도메인 중복 확인
+      // 도메인 중복 확인
       const { data: existingOrg, error: checkError } = await supabase
         .from('organizations')
         .select('*')
         .eq('email_domain', email_domain)
-        .neq('id', id)
         .limit(1);
 
       if (checkError) {
@@ -68,58 +75,32 @@ module.exports = async (req, res) => {
       }
 
       if (existingOrg && existingOrg.length > 0) {
-        return res.status(400).json({ error: '이미 다른 기관에서 사용 중인 도메인입니다.' });
+        return res.status(400).json({ error: '이미 등록된 도메인입니다.' });
       }
 
-      const { data: updatedOrg, error: updateError } = await supabase
+      const orgId = uuidv4();
+      const { data: newOrg, error: insertError } = await supabase
         .from('organizations')
-        .update({
-          name,
-          email_domain,
-          auto_login_enabled
-        })
-        .eq('id', id)
+        .insert([
+          {
+            id: orgId,
+            name,
+            email_domain,
+            auto_login_enabled,
+            created_at: new Date().toISOString()
+          }
+        ])
         .select()
         .single();
 
-      if (updateError) {
-        return res.status(500).json({ error: '기관 수정 중 오류가 발생했습니다.' });
+      if (insertError) {
+        return res.status(500).json({ error: '기관 등록 중 오류가 발생했습니다.' });
       }
 
-      return res.json({
-        message: '기관이 성공적으로 수정되었습니다.',
-        organization: updatedOrg
+      return res.status(201).json({
+        message: '기관이 성공적으로 등록되었습니다.',
+        organization: newOrg
       });
-    }
-
-    if (req.method === 'DELETE') {
-      // 기관 삭제
-      // 해당 기관의 사용자 수 확인
-      const { data: users, error: userError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('organization_id', id);
-
-      if (userError) {
-        return res.status(500).json({ error: '사용자 확인 중 오류가 발생했습니다.' });
-      }
-
-      if (users && users.length > 0) {
-        return res.status(400).json({ 
-          error: '해당 기관에 등록된 사용자가 있어 삭제할 수 없습니다. 먼저 사용자를 삭제해주세요.' 
-        });
-      }
-
-      const { error: deleteError } = await supabase
-        .from('organizations')
-        .delete()
-        .eq('id', id);
-
-      if (deleteError) {
-        return res.status(500).json({ error: '기관 삭제 중 오류가 발생했습니다.' });
-      }
-
-      return res.json({ message: '기관이 성공적으로 삭제되었습니다.' });
     }
 
     return res.status(405).json({ error: '지원하지 않는 메소드입니다.' });
@@ -129,9 +110,6 @@ module.exports = async (req, res) => {
     if (error.message.includes('토큰') || error.message.includes('권한')) {
       return res.status(401).json({ error: error.message });
     }
-    return res.status(500).json({ 
-      error: '서버 오류가 발생했습니다.',
-      details: error.message 
-    });
+    return res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 };

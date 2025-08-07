@@ -88,6 +88,7 @@ function AdminLicenseList({ user }) {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
+      // 경로 파라미터 방식으로 변경
       await axios.put(`/api/admin/licenses/${editingLicense.id}`, editingLicense, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -110,6 +111,7 @@ function AdminLicenseList({ user }) {
 
     try {
       const token = localStorage.getItem('token');
+      // 경로 파라미터 방식으로 변경
       await axios.delete(`/api/admin/licenses/${licenseId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
