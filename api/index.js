@@ -70,9 +70,15 @@ app.get('/api/licenses', authenticateToken, async (req, res) => {
     const { organization_id } = req.user;
     console.log('사용자 organization_id:', organization_id);
     
+    // 조직 정보와 함께 라이선스 조회
     const { data: licenses, error } = await supabase
       .from('ai_licenses')
-      .select('*')
+      .select(`
+        *,
+        organizations (
+          name
+        )
+      `)
       .eq('organization_id', organization_id);
 
     if (error) {
@@ -95,8 +101,10 @@ app.get('/api/licenses', authenticateToken, async (req, res) => {
         available_licenses: finalAvailable,
         available_count: finalAvailable,
         // 호환성을 위한 추가 필드
-        total_licenses: license.total_licenses || license.total_count || 0,
-        organization_name: license.organization_name || '전북대학교'
+        total_licenses: license.total_count || license.total_licenses || 0,
+        organization_name: license.organizations?.name || license.organization || '전북대학교',
+        // 관리자가 입력한 라이선스 ID 사용
+        display_license_id: license.license_id || license.id
       };
     });
 

@@ -19,6 +19,7 @@ function LicenseList({ user }) {
         headers: { Authorization: `Bearer ${token}` }
       });
       console.log('받은 라이선스 데이터:', response.data);
+      // 필터링 제거 - 모든 라이선스 표시
       setLicenses(response.data);
     } catch (err) {
       setError('라이선스 목록을 불러오는 중 오류가 발생했습니다.');
@@ -83,52 +84,59 @@ function LicenseList({ user }) {
               </tr>
             </thead>
             <tbody>
-              {licenses.map(license => (
-                <tr key={license.id}>
-                  <td>{license.organization_name || '전북대학교'}</td>
-                  <td>
-                    <div>
-                      <strong>{license.name}</strong>
-                      <br />
-                      <small className="text-muted">{license.description}</small>
-                    </div>
-                  </td>
-                  <td>
-                    <code>{license.license_key || license.id}</code>
-                  </td>
-                  <td>
-                    <span className={`badge ${
-                      (license.available_licenses || license.available_count || 0) > 0 
-                        ? 'bg-success' 
-                        : 'bg-danger'
-                    }`}>
-                      {(license.available_licenses || license.available_count || 0) > 0 
-                        ? '대출가능' 
-                        : '대출불가'}
-                    </span>
-                  </td>
-                  <td>최대 {license.max_loan_days}일</td>
-                  <td>
-                    <strong>{license.available_licenses || license.available_count || 0}</strong>
-                    /
-                    {license.total_licenses || license.total_count || 0}
-                  </td>
-                  <td>
-                    {(license.available_licenses || license.available_count || 0) > 0 ? (
-                      <button
-                        className="btn btn-primary btn-sm"
-                        onClick={() => handleLoan(license.id)}
-                      >
-                        대출 신청
-                      </button>
-                    ) : (
-                      <button className="btn btn-secondary btn-sm" disabled>
-                        대출 불가
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {licenses.map(license => {
+                const availableCount = license.available_licenses || license.available_count || 0;
+                const totalCount = license.total_licenses || license.total_count || 0;
+                
+                return (
+                  <tr key={license.id}>
+                    <td>{license.organization_name}</td>
+                    <td>
+                      <div>
+                        <strong>{license.name}</strong>
+                        {license.description && (
+                          <>
+                            <br />
+                            <small className="text-muted">{license.description}</small>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <code>{license.display_license_id}</code>
+                    </td>
+                    <td>
+                      <span className={`badge ${
+                        availableCount > 0 
+                          ? 'bg-success' 
+                          : 'bg-danger'
+                      }`}>
+                        {availableCount > 0 ? '대출가능' : '대출불가'}
+                      </span>
+                    </td>
+                    <td>최대 {license.max_loan_days}일</td>
+                    <td>
+                      <strong>{availableCount}</strong>
+                      /
+                      {totalCount}
+                    </td>
+                    <td>
+                      {availableCount > 0 ? (
+                        <button
+                          className="btn btn-primary btn-sm"
+                          onClick={() => handleLoan(license.id)}
+                        >
+                          대출 신청
+                        </button>
+                      ) : (
+                        <button className="btn btn-secondary btn-sm" disabled>
+                          대출 불가
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
