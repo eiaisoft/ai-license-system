@@ -172,11 +172,6 @@ function LicenseList({ user }) {
                       </div>
                     </td>
                     <td>
-                      <div>
-                        <strong>{license.name}</strong>
-                      </div>
-                    </td>
-                    <td>
                       <code>{license.display_license_id}</code>
                     </td>
                     <td>
