@@ -107,9 +107,8 @@ app.get('/api/licenses', authenticateToken, async (req, res) => {
       
       // 관리자가 입력한 라이선스 ID가 있으면 우선 사용
       if (license.license_id && license.license_id.trim() !== '') {
-        // 라이선스 ID 형식 변경: 'AI-' 접두사와 라이선스 이름의 첫 글자를 사용하여 형식화
-        const namePrefix = license.name ? license.name.charAt(0).toUpperCase() : '';
-        displayLicenseId = `AI-${namePrefix}${license.license_id}`;
+        // 관리자가 입력한 라이선스 ID를 그대로 사용
+        displayLicenseId = license.license_id;
       } else {
         // 없으면 자동 생성된 ID 사용 (형식 변경)
         const randomNum = Math.floor(1000 + Math.random() * 9000); // 1000-9999 사이의 랜덤 숫자
