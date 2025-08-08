@@ -195,7 +195,7 @@ function LicenseList({ user }) {
                 <th>라이선스 ID</th>
                 <th>상태</th>
                 <th>대출기간</th>
-                <th>작업</th>
+                {/* 작업 열 제거 */}
               </tr>
             </thead>
             <tbody>
@@ -214,29 +214,27 @@ function LicenseList({ user }) {
                       <code>{license.display_license_id}</code>
                     </td>
                     <td>
-                      <span className={`badge ${
-                        availableCount > 0 
-                          ? 'bg-success' 
-                          : 'bg-danger'
-                      }`}>
-                        {availableCount > 0 ? '구독가능' : '구독불가'}
-                      </span>
+                      <div className="d-flex align-items-center">
+                        <span className={`badge ${
+                          availableCount > 0 
+                            ? 'bg-success' 
+                            : 'bg-danger'
+                        }`}>
+                          {availableCount > 0 ? '구독가능' : '구독불가'}
+                        </span>
+                        
+                        {/* 구독가능한 경우에만 구독 신청 버튼 표시 */}
+                        {availableCount > 0 && (
+                          <button
+                            className="btn btn-primary btn-sm ms-2"
+                            onClick={() => openLoanModal(license)}
+                          >
+                            구독 신청
+                          </button>
+                        )}
+                      </div>
                     </td>
                     <td>최대 {license.max_loan_days}일</td>
-                    <td>
-                      {availableCount > 0 ? (
-                        <button
-                          className="btn btn-primary btn-sm"
-                          onClick={() => openLoanModal(license)}
-                        >
-                          구독 신청
-                        </button>
-                      ) : (
-                        <button className="btn btn-secondary btn-sm" disabled>
-                          구독 불가
-                        </button>
-                      )}
-                    </td>
                   </tr>
                 );
               })}
