@@ -1,7 +1,7 @@
 {
-  "name": "ai-license-system",
+  "name": "license-subscription-system",
   "version": "1.0.0",
-  "description": "AI 라이선스 대출 관리 시스템",
+  "description": "License Short-term Subscription System",
   "main": "server/index.js",
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run client\"",
@@ -11,8 +11,8 @@
     "build": "cd client && npm run build",
     "vercel-build": "npm install && cd client && npm install && cd ../api && npm install && cd ../client && npm run build"
   },
-  "keywords": ["ai", "license", "대출", "관리"],
-  "author": "AI License System Team",
+  "keywords": ["license", "subscription", "management"],
+  "author": "License Subscription System Team",
   "license": "MIT",
   "dependencies": {
     "@supabase/supabase-js": "^2.53.0",

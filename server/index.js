@@ -443,21 +443,22 @@ app.post('/api/licenses/:licenseId/loan', authenticateToken, async (req, res) =>
     return res.status(400).json({ error: '사용 가능한 라이선스가 없습니다.' });
   }
 
-  // 이미 대출 중인지 확인
-  const { data: existingLoan, error: loanError } = await supabase
+  // 기존 구독 확인
+  const { data: existingLoan, error: loanCheckError } = await supabase
     .from('license_loans')
-    .select('*')
-    .eq('license_id', licenseId)
+    .select('id')
     .eq('user_id', userId)
+    .eq('license_id', licenseId)
     .eq('status', 'active')
-    .single();
+    .limit(1);
 
-  if (loanError) {
-    return res.status(500).json({ error: '대출 상태 확인 중 오류가 발생했습니다.' });
+  if (loanCheckError) {
+    console.error('구독 확인 오류:', loanCheckError);
+    return res.status(500).json({ error: '데이터베이스 오류가 발생했습니다.' });
   }
 
-  if (existingLoan) {
-    return res.status(400).json({ error: '이미 대출 중인 라이선스입니다.' });
+  if (existingLoan && existingLoan.length > 0) {
+    return res.status(400).json({ error: '이미 구독 중인 라이선스입니다.' });
   }
 
   // 대출 처리
@@ -494,8 +495,9 @@ app.post('/api/licenses/:licenseId/loan', authenticateToken, async (req, res) =>
     message: '라이선스 대출이 완료되었습니다.',
     loan: {
       id: loanId,
-      license_id: licenseId,
-      return_date: returnDate.toISOString()
+      license_name: license.name,
+      loan_date: loanDate.toISOString(),
+      due_date: returnDate.toISOString()
     }
   });
 });

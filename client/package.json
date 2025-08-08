@@ -1,7 +1,7 @@
 {
-  "name": "ai-license-client",
+  "name": "license-subscription-client",
   "version": "1.0.0",
-  "description": "AI 라이선스 대출 시스템 클라이언트",
+  "description": "License Short-term Subscription System Client",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.17.0",

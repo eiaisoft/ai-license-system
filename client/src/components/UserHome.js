@@ -78,7 +78,7 @@ function UserHome({ user }) {
       <div className="row mb-4">
         <div className="col-12">
           <h1 className="mb-3">안녕하세요, {user.name}님! 👋</h1>
-          <p className="text-muted">AI 라이선스 대출 시스템에 오신 것을 환영합니다.</p>
+          <p className="text-muted">License Short-term Subscription System에 오신 것을 환영합니다.</p>
         </div>
       </div>
 
@@ -102,7 +102,7 @@ function UserHome({ user }) {
           <div className="card text-center bg-success text-white">
             <div className="card-body">
               <h2 className="card-title">{stats.myActiveLoans}</h2>
-              <p className="card-text">현재 대출 중</p>
+              <p className="card-text">현재 구독 중</p>
             </div>
           </div>
         </div>
@@ -110,7 +110,7 @@ function UserHome({ user }) {
           <div className="card text-center bg-info text-white">
             <div className="card-body">
               <h2 className="card-title">{stats.totalLoans}</h2>
-              <p className="card-text">총 대출 내역</p>
+              <p className="card-text">총 구독 내역</p>
             </div>
           </div>
         </div>
@@ -140,7 +140,7 @@ function UserHome({ user }) {
                         </div>
                         <div className="text-center">
                           <span className={`badge rounded-pill ${available > 0 ? 'bg-success' : 'bg-danger'}`}>
-                            {available > 0 ? '대출가능' : '대출불가'}
+                            {available > 0 ? '구독가능' : '구독불가'}
                           </span>
                         </div>
                       </div>
@@ -156,14 +156,14 @@ function UserHome({ user }) {
         <div className="col-md-6">
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
-              <h5 className="mb-0">📋 내 활성 대출</h5>
+              <h5 className="mb-0">📋 내 활성 구독</h5>
               <Link to="/loans" className="btn btn-sm btn-outline-success">
                 전체 보기
               </Link>
             </div>
             <div className="card-body">
               {myActiveLoans.length === 0 ? (
-                <p className="text-muted text-center">현재 대출 중인 라이선스가 없습니다.</p>
+                <p className="text-muted text-center">현재 구독 중인 라이선스가 없습니다.</p>
               ) : (
                 <div className="list-group list-group-flush">
                   {myActiveLoans.map(loan => (
@@ -171,10 +171,10 @@ function UserHome({ user }) {
                       <div>
                         <h6 className="mb-1">{loan.license_name}</h6>
                         <small className="text-muted">
-                          반납 예정: {formatDate(loan.return_date)}
+                          만료 예정: {formatDate(loan.return_date)}
                         </small>
                       </div>
-                      <span className="badge bg-success rounded-pill">대출중</span>
+                      <span className="badge bg-success rounded-pill">구독중</span>
                     </div>
                   ))}
                 </div>

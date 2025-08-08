@@ -1,166 +1,148 @@
 # AI 라이선스 대출 관리 시스템
 
-## 프로젝트 구조 설명
+# License Short-term Subscription System
 
-이 프로젝트는 다음과 같은 구조로 구성되어 있습니다:
+## 프로젝트 구조
 
-### 폴더 구조
+- `api/`: Vercel 서버리스 함수 (배포용)
+- `server/`: 로컬 개발용 서버
+- `client/`: React 클라이언트
 
-- `api/`: Vercel 서버리스 함수로 배포되는 API 코드
-  - Vercel 배포 환경에서 사용됩니다.
-  - 각 파일은 독립적인 서버리스 함수로 동작합니다.
+## 개발 환경 설정
 
-- `server/`: 로컬 개발 환경용 Express 서버 코드
-  - 로컬 개발 환경에서만 사용됩니다.
-  - Vercel 배포에는 사용되지 않습니다.
+### 1. 필수 요구사항
 
-- `client/`: React 기반 프론트엔드 코드
-  - 로컬 개발 및 Vercel 배포 환경 모두에서 사용됩니다.
+- Node.js 18 이상
+- npm 9 이상
 
-### 개발 환경 설정
-
-1. 로컬 개발 환경에서는 `server/` 폴더의 Express 서버를 사용합니다:
+### 2. 설치 및 실행
 
 ```bash
-# 루트 디렉토리에서
+# 모든 패키지 설치
 npm run install-all
-```
 
-또는 각각 설치:
-
-```bash
-# 서버 의존성 설치
-cd server
-npm install
-
-# 클라이언트 의존성 설치
-cd ../client
-npm install
-```
-
-### 2. 서버 실행
-
-```bash
-# 개발 모드 (서버만)
-cd server
-npm run dev
-
-# 또는 루트에서
-npm run server
-```
-
-### 3. 클라이언트 실행
-
-```bash
-# 새 터미널에서
-cd client
-npm start
-
-# 또는 루트에서
-npm run client
-```
-
-### 4. 전체 애플리케이션 실행
-
-```bash
-# 루트 디렉토리에서 (서버 + 클라이언트 동시 실행)
+# 개발 서버 실행 (클라이언트 + 서버)
 npm run dev
 ```
 
-## 사용법
+## 사용 방법
 
-### 1. 회원가입
-- `/register` 페이지에서 소속 기관을 선택하고 계정 생성
-- 기관 정보는 관리자가 미리 등록해야 함
+### 1. 관리자 로그인
 
-### 2. 로그인
-- `/login` 페이지에서 이메일과 비밀번호로 로그인
+- 기본 관리자 계정: `admin@eiaisoft.com`
+- 기본 비밀번호: `admin123` (환경 변수로 변경 가능)
 
-### 3. 라이선스 대출
-- 메인 페이지에서 사용 가능한 AI 라이선스 목록 확인
-- 원하는 라이선스의 "대출 신청" 버튼 클릭
-- 대출 기간은 라이선스별로 설정된 기간만큼 자동 설정
+### 2. 기관 및 사용자 관리
 
-### 4. 대출 내역 확인
-- "대출 내역" 메뉴에서 본인의 대출 기록 확인
-- 대출 중인 라이선스는 "반납" 버튼으로 조기 반납 가능
+- 관리자 페이지에서 기관 추가
+- 기관 이메일 도메인 설정 (예: `jbnu.ac.kr`)
+- 사용자는 해당 도메인 이메일로 가입 가능
+
+### 3. 라이선스 구독
+
+- 메인 페이지에서 사용 가능한 라이선스 목록 확인
+- 구독 신청 버튼 클릭
+- 구독 기간 선택 후 신청
+- 구독 내역 페이지에서 현재 구독 상태 확인
 
 ## API 엔드포인트
 
 ### 인증
-- `POST /api/auth/login` - 로그인
-- `POST /api/auth/register` - 회원가입
 
-### 라이선스
-- `GET /api/licenses` - 기관별 라이선스 목록 조회
-- `POST /api/licenses/:id/loan` - 라이선스 대출 신청
-
-### 대출 관리
-- `GET /api/loans` - 사용자 대출 내역 조회
-- `POST /api/loans/:id/return` - 라이선스 반납
+- `POST /api/auth/login` - 일반 사용자 로그인
+- `POST /api/auth/admin-login` - 관리자 로그인
+- `POST /api/auth/check-domain` - 도메인 확인
+- `POST /api/auth/first-login` - 최초 로그인 (계정 생성)
+- `POST /api/auth/change-password` - 비밀번호 변경
 
 ### 기관
+
 - `GET /api/organizations` - 기관 목록 조회
+- `POST /api/organizations` - 기관 추가
+- `PUT /api/organizations/:id` - 기관 정보 수정
+- `DELETE /api/organizations/:id` - 기관 삭제
+
+### 라이선스
+
+- `GET /api/licenses` - 라이선스 목록 조회
+- `POST /api/licenses` - 라이선스 추가
+- `PUT /api/licenses/:id` - 라이선스 정보 수정
+- `DELETE /api/licenses/:id` - 라이선스 삭제
+- `POST /api/licenses/:id/loan` - 라이선스 구독 신청
+- `POST /api/licenses/:id/return` - 라이선스 구독 해지
+
+### 사용자
+
+- `GET /api/users` - 사용자 목록 조회
+- `POST /api/users` - 사용자 추가
+- `PUT /api/users/:id` - 사용자 정보 수정
+- `DELETE /api/users/:id` - 사용자 삭제
 
 ## 데이터베이스 구조
 
 ### organizations (기관)
-- id: 고유 식별자
+- id: UUID (PK)
 - name: 기관명
-- email: 기관 이메일
+- email_domain: 이메일 도메인
+- auto_login_enabled: 자동 로그인 허용 여부
+- created_at: 생성일
 
 ### users (사용자)
-- id: 고유 식별자
-- organization_id: 소속 기관 ID
+- id: UUID (PK)
 - name: 사용자명
 - email: 이메일
 - password: 암호화된 비밀번호
-- role: 사용자 역할
+- organization_id: 기관 ID (FK)
+- role: 역할 (user/admin)
+- created_at: 생성일
 
-### ai_licenses (AI 라이선스)
-- id: 고유 식별자
-- organization_id: 소유 기관 ID
+### ai_licenses (라이선스)
+- id: UUID (PK)
 - name: 라이선스명
 - description: 설명
-- total_licenses: 전체 라이선스 수
+- organization_id: 기관 ID (FK)
+- total_licenses: 총 라이선스 수
 - available_licenses: 사용 가능한 라이선스 수
-- max_loan_days: 최대 대출 기간
+- max_loan_days: 최대 구독 기간
+- created_at: 생성일
 
-### license_loans (라이선스 대출)
-- id: 고유 식별자
-- license_id: 라이선스 ID
-- user_id: 사용자 ID
-- loan_date: 대출일
-- return_date: 반납 예정일
-- status: 대출 상태 (active/returned)
+### license_loans (라이선스 구독)
+- id: UUID (PK)
+- user_id: 사용자 ID (FK)
+- license_id: 라이선스 ID (FK)
+- loan_date: 구독 시작일
+- due_date: 구독 종료 예정일
+- return_date: 실제 구독 종료일
+- status: 상태 (active/returned)
+- created_at: 생성일
 
 ## 샘플 데이터
 
-시스템 실행 시 자동으로 다음 샘플 데이터가 생성됩니다:
+```sql
+-- 기관 샘플 데이터
+INSERT INTO organizations (id, name, email_domain, auto_login_enabled)
+VALUES 
+  ('550e8400-e29b-41d4-a716-446655440000', '전북대학교', 'jbnu.ac.kr', true);
 
-- **기관**: 테스트 기관
-- **사용자**: 테스트 사용자 (user@test.com / password123)
-- **라이선스**: 
-  - ChatGPT Pro (10개 중 8개 사용 가능, 30일 대출)
-  - Claude Pro (5개 중 3개 사용 가능, 14일 대출)
+-- 라이선스 샘플 데이터
+INSERT INTO ai_licenses (id, name, description, organization_id, total_licenses, available_licenses, max_loan_days)
+VALUES 
+  ('550e8400-e29b-41d4-a716-446655440001', 'ChatGPT Plus', 'OpenAI의 ChatGPT Plus 구독', '550e8400-e29b-41d4-a716-446655440000', 10, 10, 30);
+```
 
 ## 환경 설정
 
-### 서버 포트
-기본 포트: 5000
-환경변수 `PORT`로 변경 가능
+### 환경 변수
 
-### 데이터베이스
-SQLite 파일: `server/database.sqlite`
-자동으로 생성되며 초기 테이블과 샘플 데이터 포함
+- `PORT`: 서버 포트 (기본값: 3000)
+- `JWT_SECRET`: JWT 토큰 암호화 키
+- `SUPABASE_URL`: Supabase URL
+- `SUPABASE_ANON_KEY`: Supabase Anon Key
+- `ADMIN_EMAIL`: 관리자 이메일 (기본값: admin@eiaisoft.com)
+- `ADMIN_PASSWORD`: 관리자 비밀번호 (기본값: admin123)
 
-## 보안 기능
+## 보안
 
+- 비밀번호는 bcrypt로 암호화하여 저장
 - JWT 토큰 기반 인증
-- bcrypt를 사용한 비밀번호 암호화
-- 기관별 라이선스 접근 제한
-- 중복 대출 방지
-
-## 라이선스
-
-MIT License
+- 관리자 권한 검증 미들웨어

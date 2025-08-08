@@ -146,7 +146,7 @@ function LicenseList({ user }) {
 
   return (
     <div>
-      <h1 className="mb-3">사용 가능한 AI 라이선스</h1>
+      <h1 className="mb-3">사용 가능한 라이선스</h1>
       
       {message && (
         <div className="alert alert-success d-flex justify-content-between align-items-center">
@@ -158,7 +158,7 @@ function LicenseList({ user }) {
                 className="btn btn-primary btn-sm"
                 onClick={clearRecentLoan}
               >
-                대출 내역 바로가기
+                구독 내역 바로가기
               </Link>
               <Link 
                 to="/dashboard" 
@@ -216,7 +216,7 @@ function LicenseList({ user }) {
                           ? 'bg-success' 
                           : 'bg-danger'
                       }`}>
-                        {availableCount > 0 ? '대출가능' : '대출불가'}
+                        {availableCount > 0 ? '구독가능' : '구독불가'}
                       </span>
                     </td>
                     <td>최대 {license.max_loan_days}일</td>
@@ -226,11 +226,11 @@ function LicenseList({ user }) {
                           className="btn btn-primary btn-sm"
                           onClick={() => openLoanModal(license)}
                         >
-                          대출 신청
+                          구독 신청
                         </button>
                       ) : (
                         <button className="btn btn-secondary btn-sm" disabled>
-                          대출 불가
+                          구독 불가
                         </button>
                       )}
                     </td>
@@ -248,7 +248,7 @@ function LicenseList({ user }) {
           <div className="modal-dialog">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">라이선스 대출 신청</h5>
+                <h5 className="modal-title">라이선스 구독 신청</h5>
                 <button type="button" className="btn-close" onClick={closeLoanModal}></button>
               </div>
               <div className="modal-body">
@@ -261,11 +261,11 @@ function LicenseList({ user }) {
                       <strong>라이선스 ID:</strong> <code>{selectedLicense.display_license_id}</code>
                     </div>
                     <div className="mb-3">
-                      <strong>최대 대출 기간:</strong> {selectedLicense.max_loan_days}일
+                      <strong>최대 구독 기간:</strong> {selectedLicense.max_loan_days}일
                     </div>
                     
                     <div className="mb-3">
-                      <label htmlFor="loanStartDate" className="form-label">대출 시작일</label>
+                      <label htmlFor="loanStartDate" className="form-label">구독 시작일</label>
                       <input
                         type="date"
                         className="form-control"
@@ -277,7 +277,7 @@ function LicenseList({ user }) {
                     </div>
                     
                     <div className="mb-3">
-                      <label htmlFor="loanEndDate" className="form-label">대출 종료일</label>
+                      <label htmlFor="loanEndDate" className="form-label">구독 종료일</label>
                       <input
                         type="date"
                         className="form-control"
@@ -304,7 +304,7 @@ function LicenseList({ user }) {
                   취소
                 </button>
                 <button type="button" className="btn btn-primary" onClick={handleLoan}>
-                  대출 신청
+                  구독 신청
                 </button>
               </div>
             </div>

@@ -1,7 +1,7 @@
 {
-  "name": "ai-license-server",
+  "name": "license-subscription-server",
   "version": "1.0.0",
-  "description": "AI 라이선스 대출 시스템 서버",
+  "description": "License Short-term Subscription System Server",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",

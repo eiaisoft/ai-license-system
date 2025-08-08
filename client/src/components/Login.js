@@ -140,7 +140,7 @@ const Login = ({ onLogin }) => {
 
   return (
     <div className="card" style={{ maxWidth: '400px', margin: '50px auto' }}>
-      <h2 className="text-center mb-3">AI 라이선스 대출 시스템</h2>
+      <h2 className="text-center mb-3">License Short-term Subscription System</h2>
       
       {error && (
         <div className="alert alert-danger" role="alert">

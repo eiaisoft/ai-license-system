@@ -6,7 +6,7 @@ function Navbar({ user, onLogout }) {
     <nav className="navbar">
       <div className="container d-flex justify-content-between align-items-center">
         <Link to="/" className="navbar-brand">
-          AI 라이선스 대출 시스템
+          License Short-term Subscription System
         </Link>
         
         <ul className="navbar-nav">
@@ -25,7 +25,7 @@ function Navbar({ user, onLogout }) {
                     <Link to="/admin/licenses">라이선스 관리</Link>
                   </li>
                   <li>
-                    <Link to="/admin/loans">대출 관리</Link>
+                    <Link to="/admin/loans">구독 관리</Link>
                   </li>
                 </>
               ) : (
@@ -38,7 +38,7 @@ function Navbar({ user, onLogout }) {
                     <Link to="/licenses">라이선스 목록</Link>
                   </li>
                   <li>
-                    <Link to="/loans">내 대출 내역</Link>
+                    <Link to="/loans">내 구독 내역</Link>
                   </li>
                   <li>
                     <Link to="/change-password">비밀번호 변경</Link>
