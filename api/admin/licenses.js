@@ -94,9 +94,9 @@ module.exports = async (req, res) => {
           id: newLicenseId,
           organization_id: orgData.id,
           name: name.trim(),
-          description: `${name.trim()} License`,
-          total_count: 10, // 기본값
-          available_count: 10, // 기본값
+          description: '', // 빈 값으로 설정
+          total_count: 1, // 기본값을 1로 변경
+          available_count: 1, // 기본값을 1로 변경
           organization: organization.trim(),
           license_id: license_id.trim(),
           max_loan_days: parseInt(max_loan_days),

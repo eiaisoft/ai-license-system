@@ -143,11 +143,6 @@ function UserHome({ user }) {
                             {available > 0 ? '대출가능' : '대출불가'}
                           </span>
                         </div>
-                        <div className="text-center">
-                          <span className={`badge rounded-pill ${available > 0 ? 'bg-primary' : 'bg-secondary'}`}>
-                            {available}개 사용가능
-                          </span>
-                        </div>
                       </div>
                     );
                   })}
