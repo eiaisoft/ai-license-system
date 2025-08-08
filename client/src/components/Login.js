@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 const Login = ({ onLogin }) => {
   const [email, setEmail] = useState('');
@@ -189,6 +190,22 @@ const Login = ({ onLogin }) => {
           {loading ? '로그인 중...' : '로그인'}
         </button>
       </form>
+
+      {/* 관리자 로그인 링크 - 관리자만 알 수 있는 기호 */}
+      <div className="text-center mt-3">
+        <Link 
+          to="/admin-login" 
+          style={{ 
+            color: '#6c757d', 
+            textDecoration: 'none', 
+            fontSize: '18px',
+            opacity: 0.7
+          }}
+          title="관리자 로그인"
+        >
+          ⚙️
+        </Link>
+      </div>
     </div>
   );
 };
