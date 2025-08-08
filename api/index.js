@@ -102,11 +102,23 @@ app.get('/api/licenses', authenticateToken, async (req, res) => {
       const availableLicenses = license.available_licenses || 0;
       const finalAvailable = Math.max(availableCount, availableLicenses);
       
-      console.log('라이선스 데이터:', {
+      // 라이선스 ID 처리 로직 개선
+      let displayLicenseId = '';
+      
+      // 관리자가 입력한 라이선스 ID가 있으면 우선 사용
+      if (license.license_id && license.license_id.trim() !== '') {
+        displayLicenseId = license.license_id;
+      } else {
+        // 없으면 자동 생성된 ID 사용
+        displayLicenseId = license.id || 'ID 없음';
+      }
+      
+      console.log('라이선스 데이터 상세:', {
         id: license.id,
         name: license.name,
         license_id: license.license_id,
-        organization: license.organization
+        organization: license.organization,
+        display_license_id: displayLicenseId
       });
       
       return {
@@ -115,7 +127,7 @@ app.get('/api/licenses', authenticateToken, async (req, res) => {
         available_count: finalAvailable,
         total_licenses: license.total_count || license.total_licenses || 0,
         organization_name: license.organization || '전북대학교',
-        display_license_id: license.license_id || license.id || 'ID 없음'  // fallback 추가
+        display_license_id: displayLicenseId
       };
     });
 
