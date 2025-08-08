@@ -101,6 +101,13 @@ app.get('/api/licenses', authenticateToken, async (req, res) => {
     
     console.log('모든 조직 정보:', JSON.stringify(organizations, null, 2));
     
+    // organization_id 매칭 확인
+    if (allLicenses && allLicenses.length > 0) {
+      allLicenses.forEach(license => {
+        console.log(`라이선스 ${license.name}의 organization_id: ${license.organization_id}, 사용자 organization_id: ${organization_id}, 일치: ${license.organization_id === organization_id}`);
+      });
+    }
+    
     // 사용자의 organization_id와 일치하는 라이선스만 조회
     const { data: licenses, error } = await supabase
       .from('ai_licenses')
@@ -112,11 +119,28 @@ app.get('/api/licenses', authenticateToken, async (req, res) => {
       return res.status(500).json({ error: '데이터베이스 오류가 발생했습니다.' });
     }
 
-    console.log('조회된 라이선스 개수:', licenses?.length || 0);
-    console.log('조회된 라이선스 원본 데이터:', JSON.stringify(licenses, null, 2));
+    console.log('organization_id로 필터링된 라이선스 개수:', licenses?.length || 0);
+    console.log('필터링된 라이선스 데이터:', JSON.stringify(licenses, null, 2));
 
-    // 만약 organization_id로 필터링했을 때 결과가 없다면, 모든 라이선스를 반환 (임시 해결책)
-    const finalLicenses = (licenses && licenses.length > 0) ? licenses : allLicenses;
+    // 임시 해결책: organization_id가 일치하지 않는 경우 모든 라이선스 반환
+    // 하지만 실제로는 organization_id 불일치 문제를 해결해야 함
+    let finalLicenses;
+    
+    if (licenses && licenses.length > 0) {
+      finalLicenses = licenses;
+      console.log('organization_id 필터링 결과 사용');
+    } else {
+      console.log('⚠️ organization_id 필터링 결과가 없음. 모든 라이선스 반환 (임시)');
+      finalLicenses = allLicenses;
+      
+      // organization_id 불일치 원인 분석
+      if (allLicenses && allLicenses.length > 0) {
+        const licenseOrgIds = [...new Set(allLicenses.map(l => l.organization_id))];
+        console.log('라이선스들의 organization_id 목록:', licenseOrgIds);
+        console.log('사용자의 organization_id:', organization_id);
+        console.log('타입 비교:', typeof organization_id, 'vs', typeof licenseOrgIds[0]);
+      }
+    }
     
     console.log('최종 사용할 라이선스 데이터:', JSON.stringify(finalLicenses, null, 2));
 
