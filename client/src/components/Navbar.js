@@ -68,7 +68,19 @@ function Navbar({ user, onLogout }) {
           ) : (
             <>
               <li>
-                <Link to="/admin-login">관리자</Link>
+                <Link 
+                  to="/admin-login"
+                  style={{ 
+                    color: '#fff', 
+                    textDecoration: 'none', 
+                    fontSize: '18px',
+                    opacity: 0.7,
+                    padding: '5px 10px'
+                  }}
+                  title="관리자 로그인"
+                >
+                  ⚙️
+                </Link>
               </li>
               <li>
                 <Link to="/login">로그인</Link>
