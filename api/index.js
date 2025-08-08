@@ -102,13 +102,20 @@ app.get('/api/licenses', authenticateToken, async (req, res) => {
       const availableLicenses = license.available_licenses || 0;
       const finalAvailable = Math.max(availableCount, availableLicenses);
       
+      console.log('라이선스 데이터:', {
+        id: license.id,
+        name: license.name,
+        license_id: license.license_id,
+        organization: license.organization
+      });
+      
       return {
         ...license,
         available_licenses: finalAvailable,
         available_count: finalAvailable,
         total_licenses: license.total_count || license.total_licenses || 0,
         organization_name: license.organization || '전북대학교',
-        display_license_id: license.license_id  // 관리자 페이지와 동일한 라이선스 ID 사용
+        display_license_id: license.license_id || license.id || 'ID 없음'  // fallback 추가
       };
     });
 
