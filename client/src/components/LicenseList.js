@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
 import ErrorMessage from './ErrorMessage';
 
 function LicenseList({ user }) {
@@ -11,7 +12,8 @@ function LicenseList({ user }) {
   const [selectedLicense, setSelectedLicense] = useState(null);
   const [loanStartDate, setLoanStartDate] = useState('');
   const [loanEndDate, setLoanEndDate] = useState('');
-
+  const [recentLoanedLicense, setRecentLoanedLicense] = useState(null); // 추가: 최근 대출한 라이선스 정보
+  
   useEffect(() => {
     fetchLicenses();
   }, []);
@@ -86,23 +88,37 @@ function LicenseList({ user }) {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`/api/licenses/${selectedLicense.id}/loan`, {
+      const response = await axios.post(`/api/licenses/${selectedLicense.id}/loan`, {
         loan_start_date: loanStartDate,
         loan_end_date: loanEndDate
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
+      // 대출 완료된 라이선스 정보 저장
+      setRecentLoanedLicense({
+        id: response.data.loan.id,
+        name: selectedLicense.name,
+        license_id: selectedLicense.id,
+        display_license_id: selectedLicense.display_license_id
+      });
+      
       setMessage('라이선스 대출이 완료되었습니다.');
       fetchLicenses();
       closeLoanModal();
       
-      setTimeout(() => setMessage(''), 3000);
+      // 메시지는 바로가기 버튼을 클릭하거나 다른 작업을 할 때까지 유지
     } catch (err) {
       console.error('대출 신청 오류:', err);
       setError(err.response?.data?.error || '라이선스 대출 중 오류가 발생했습니다.');
       setTimeout(() => setError(''), 3000);
     }
+  };
+
+  // 바로가기 버튼 클릭 시 메시지 제거
+  const clearRecentLoan = () => {
+    setRecentLoanedLicense(null);
+    setMessage('');
   };
 
   if (loading) {
@@ -114,8 +130,26 @@ function LicenseList({ user }) {
       <h1 className="mb-3">사용 가능한 AI 라이선스</h1>
       
       {message && (
-        <div className="alert alert-success">
-          {message}
+        <div className="alert alert-success d-flex justify-content-between align-items-center">
+          <div>{message}</div>
+          {recentLoanedLicense && (
+            <div className="d-flex gap-2">
+              <Link 
+                to="/loans" 
+                className="btn btn-primary btn-sm"
+                onClick={clearRecentLoan}
+              >
+                대출 내역 바로가기
+              </Link>
+              <Link 
+                to="/dashboard" 
+                className="btn btn-outline-primary btn-sm"
+                onClick={clearRecentLoan}
+              >
+                홈으로 이동
+              </Link>
+            </div>
+          )}
         </div>
       )}
       
