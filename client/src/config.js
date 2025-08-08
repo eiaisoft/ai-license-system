@@ -3,7 +3,7 @@ import axios from 'axios';
 // API 기본 URL 설정
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
   ? '' // 프로덕션에서는 상대 경로 사용 (Vercel rewrites 활용)
-  : 'http://localhost:3002'; // 개발 환경에서는 로컬 서버
+  : process.env.REACT_APP_API_URL || 'http://localhost:3000'; // 개발 환경에서는 환경 변수 또는 기본값 사용
 
 // axios 기본 설정
 axios.defaults.baseURL = API_BASE_URL;

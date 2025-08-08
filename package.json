@@ -7,9 +7,9 @@
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "cd server && npm run dev",
     "client": "cd client && npm start",
-    "install-all": "npm install && cd server && npm install && cd ../client && npm install",
+    "install-all": "npm install && cd server && npm install && cd ../client && npm install && cd ../api && npm install",
     "build": "cd client && npm run build",
-    "vercel-build": "npm install && cd server && npm install && cd ../client && npm install && npm run build"
+    "vercel-build": "npm install && cd client && npm install && cd ../api && npm install && cd ../client && npm run build"
   },
   "keywords": ["ai", "license", "대출", "관리"],
   "author": "AI License System Team",
