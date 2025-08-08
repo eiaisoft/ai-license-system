@@ -79,16 +79,19 @@ function LicenseList({ user }) {
   const handleLoanEndDateChange = (e) => {
     const endDate = e.target.value;
     
-    // 선택한 종료일이 최대 대출 기간을 초과하는지 확인
-    if (loanStartDate && selectedLicense) {
+    // 선택한 종료일이 최대 30일을 초과하는지 확인
+    if (loanStartDate) {
       const start = new Date(loanStartDate);
       const end = new Date(endDate);
       const maxEnd = new Date(start);
-      maxEnd.setDate(maxEnd.getDate() + selectedLicense.max_loan_days);
+      
+      // 최대 30일로 제한
+      const maxDays = 30; // 최대 30일로 고정
+      maxEnd.setDate(maxEnd.getDate() + maxDays);
       
       // 최대 대출 기간을 초과하면 경고 표시
       if (end > maxEnd) {
-        setError(`최대 대출 기간(${selectedLicense.max_loan_days}일)을 초과할 수 없습니다.`);
+        setError(`최대 구독 기간(${maxDays}일)을 초과할 수 없습니다.`);
         // 최대 허용 날짜로 설정
         setLoanEndDate(maxEnd.toISOString().split('T')[0]);
         return;
@@ -288,12 +291,13 @@ function LicenseList({ user }) {
                         max={loanStartDate ? (() => {
                           const start = new Date(loanStartDate);
                           const maxEnd = new Date(start);
-                          maxEnd.setDate(maxEnd.getDate() + selectedLicense.max_loan_days);
+                          // 최대 30일로 고정
+                          maxEnd.setDate(maxEnd.getDate() + 30);
                           return maxEnd.toISOString().split('T')[0];
                         })() : ''}
                       />
                       <small className="form-text text-muted">
-                        시작일로부터 최대 {selectedLicense.max_loan_days}일까지 선택 가능합니다.
+                        시작일로부터 최대 30일까지 선택 가능합니다.
                       </small>
                     </div>
                   </div>
