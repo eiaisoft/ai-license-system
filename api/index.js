@@ -102,23 +102,27 @@ app.get('/api/licenses', authenticateToken, async (req, res) => {
       const availableLicenses = license.available_licenses || 0;
       const finalAvailable = Math.max(availableCount, availableLicenses);
       
-      // 라이선스 ID 처리 로직 개선
+      // 라이선스 ID 처리 로직 - 관리자가 입력한 그대로 표시
       let displayLicenseId = '';
       
-      // 관리자가 입력한 라이선스 ID가 있으면 우선 사용
+      // 여러 가능한 필드명 확인하여 관리자가 입력한 라이선스 ID 찾기
       if (license.license_id && license.license_id.trim() !== '') {
-        // 관리자가 입력한 라이선스 ID를 그대로 사용
-        displayLicenseId = license.license_id;
+        displayLicenseId = license.license_id.trim();
+      } else if (license.license_code && license.license_code.trim() !== '') {
+        displayLicenseId = license.license_code.trim();
+      } else if (license.code && license.code.trim() !== '') {
+        displayLicenseId = license.code.trim();
       } else {
-        // 없으면 자동 생성된 ID 사용 (형식 변경)
-        const randomNum = Math.floor(1000 + Math.random() * 9000); // 1000-9999 사이의 랜덤 숫자
-        displayLicenseId = `AI-${randomNum}`;
+        // 관리자가 입력한 ID가 없는 경우에만 자동 생성
+        displayLicenseId = `AUTO-${license.id}`;
       }
       
       console.log('라이선스 데이터 상세:', {
         id: license.id,
         name: license.name,
         license_id: license.license_id,
+        license_code: license.license_code,
+        code: license.code,
         organization: license.organization,
         display_license_id: displayLicenseId
       });

@@ -30,7 +30,7 @@ function authenticateToken(req) {
 module.exports = async (req, res) => {
   // CORS 설정
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   
   if (req.method === 'OPTIONS') {
@@ -92,11 +92,11 @@ module.exports = async (req, res) => {
         const newLicenseId = uuidv4();
         const insertData = {
           id: newLicenseId,
-          organization_id: orgData.id,
+          // organization_id 제거 - 외래 키 제약 조건 문제 해결
           name: name.trim(),
-          description: '', // 빈 값으로 설정
-          total_count: 1, // 기본값을 1로 변경
-          available_count: 1, // 기본값을 1로 변경
+          description: '',
+          total_count: 1,
+          available_count: 1,
           organization: organization.trim(),
           license_id: license_id.trim(),
           max_loan_days: parseInt(max_loan_days),
@@ -127,6 +127,81 @@ module.exports = async (req, res) => {
         console.error('라이선스 추가 예외:', err);
         return res.status(500).json({ 
           error: '라이선스 추가 중 예외가 발생했습니다.',
+          details: err.message 
+        });
+      }
+    }
+    
+    // PUT 메서드 추가 (라이선스 수정)
+    if (req.method === 'PUT') {
+      const { name, organization, license_id, max_loan_days } = req.body;
+      const licenseId = req.url.split('/').pop(); // URL에서 ID 추출
+
+      if (!name || !organization || !license_id || !max_loan_days) {
+        return res.status(400).json({ error: '모든 필드를 입력해주세요.' });
+      }
+
+      try {
+        const { data: updatedLicense, error: updateError } = await supabase
+          .from('ai_licenses')
+          .update({
+            name: name.trim(),
+            organization: organization.trim(),
+            license_id: license_id.trim(),
+            max_loan_days: parseInt(max_loan_days)
+          })
+          .eq('id', licenseId)
+          .select()
+          .single();
+
+        if (updateError) {
+          console.error('라이선스 수정 오류:', updateError);
+          return res.status(500).json({ 
+            error: '라이선스 수정 중 오류가 발생했습니다.',
+            details: updateError.message 
+          });
+        }
+
+        return res.json({
+          message: '라이선스가 성공적으로 수정되었습니다.',
+          license: updatedLicense
+        });
+        
+      } catch (err) {
+        console.error('라이선스 수정 예외:', err);
+        return res.status(500).json({ 
+          error: '라이선스 수정 중 예외가 발생했습니다.',
+          details: err.message 
+        });
+      }
+    }
+    
+    // DELETE 메서드 추가 (라이선스 삭제)
+    if (req.method === 'DELETE') {
+      const licenseId = req.url.split('/').pop(); // URL에서 ID 추출
+
+      try {
+        const { error: deleteError } = await supabase
+          .from('ai_licenses')
+          .delete()
+          .eq('id', licenseId);
+
+        if (deleteError) {
+          console.error('라이선스 삭제 오류:', deleteError);
+          return res.status(500).json({ 
+            error: '라이선스 삭제 중 오류가 발생했습니다.',
+            details: deleteError.message 
+          });
+        }
+
+        return res.json({
+          message: '라이선스가 성공적으로 삭제되었습니다.'
+        });
+        
+      } catch (err) {
+        console.error('라이선스 삭제 예외:', err);
+        return res.status(500).json({ 
+          error: '라이선스 삭제 중 예외가 발생했습니다.',
           details: err.message 
         });
       }
