@@ -169,12 +169,11 @@ function LicenseList({ user }) {
                     <td>
                       <div>
                         <strong>{license.name}</strong>
-                        {license.description && (
-                          <>
-                            <br />
-                            <small className="text-muted">{license.description}</small>
-                          </>
-                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <div>
+                        <strong>{license.name}</strong>
                       </div>
                     </td>
                     <td>

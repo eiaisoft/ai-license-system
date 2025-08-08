@@ -137,7 +137,6 @@ function UserHome({ user }) {
                       <div key={license.id} className="list-group-item d-flex justify-content-between align-items-center">
                         <div>
                           <h6 className="mb-1">{license.name}</h6>
-                          <small className="text-muted">{license.description}</small>
                         </div>
                         <div className="text-center">
                           <span className={`badge rounded-pill ${available > 0 ? 'bg-primary' : 'bg-secondary'}`}>

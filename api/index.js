@@ -108,7 +108,7 @@ app.get('/api/licenses', authenticateToken, async (req, res) => {
         available_count: finalAvailable,
         total_licenses: license.total_count || license.total_licenses || 0,
         organization_name: license.organization || '전북대학교',
-        display_license_id: license.license_id || license.id
+        display_license_id: license.license_id  // 관리자 페이지와 동일한 라이선스 ID 사용
       };
     });
 
