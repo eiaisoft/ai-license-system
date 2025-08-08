@@ -52,10 +52,9 @@ function LicenseList({ user }) {
     const startDate = today.toISOString().split('T')[0];
     setLoanStartDate(startDate);
     
-    // 기본 대출 종료일을 최대 대출 기간으로 설정
-    const endDate = new Date(today);
-    endDate.setDate(endDate.getDate() + license.max_loan_days);
-    setLoanEndDate(endDate.toISOString().split('T')[0]);
+    // 기본 대출 종료일을 비워두거나 최대 대출 기간으로 설정할 수 있음
+    // 여기서는 사용자가 직접 선택할 수 있도록 비워둠
+    setLoanEndDate('');
     
     setShowLoanModal(true);
   };
@@ -65,19 +64,39 @@ function LicenseList({ user }) {
     setSelectedLicense(null);
     setLoanStartDate('');
     setLoanEndDate('');
+    setError('');
   };
 
   const handleLoanStartDateChange = (e) => {
     const startDate = e.target.value;
     setLoanStartDate(startDate);
     
-    // 시작일이 변경되면 종료일도 자동으로 계산
-    if (startDate && selectedLicense) {
-      const start = new Date(startDate);
-      const end = new Date(start);
-      end.setDate(end.getDate() + selectedLicense.max_loan_days);
-      setLoanEndDate(end.toISOString().split('T')[0]);
+    // 시작일이 변경되면 종료일은 초기화 (사용자가 직접 선택하도록)
+    setLoanEndDate('');
+  };
+  
+  // 대출 종료일 변경 핸들러 추가
+  const handleLoanEndDateChange = (e) => {
+    const endDate = e.target.value;
+    
+    // 선택한 종료일이 최대 대출 기간을 초과하는지 확인
+    if (loanStartDate && selectedLicense) {
+      const start = new Date(loanStartDate);
+      const end = new Date(endDate);
+      const maxEnd = new Date(start);
+      maxEnd.setDate(maxEnd.getDate() + selectedLicense.max_loan_days);
+      
+      // 최대 대출 기간을 초과하면 경고 표시
+      if (end > maxEnd) {
+        setError(`최대 대출 기간(${selectedLicense.max_loan_days}일)을 초과할 수 없습니다.`);
+        // 최대 허용 날짜로 설정
+        setLoanEndDate(maxEnd.toISOString().split('T')[0]);
+        return;
+      }
     }
+    
+    setLoanEndDate(endDate);
+    setError(''); // 오류 메시지 초기화
   };
 
   const handleLoan = async () => {
@@ -264,12 +283,17 @@ function LicenseList({ user }) {
                         className="form-control"
                         id="loanEndDate"
                         value={loanEndDate}
-                        onChange={(e) => setLoanEndDate(e.target.value)}
+                        onChange={handleLoanEndDateChange}
                         min={loanStartDate}
-                        readOnly
+                        max={loanStartDate ? (() => {
+                          const start = new Date(loanStartDate);
+                          const maxEnd = new Date(start);
+                          maxEnd.setDate(maxEnd.getDate() + selectedLicense.max_loan_days);
+                          return maxEnd.toISOString().split('T')[0];
+                        })() : ''}
                       />
                       <small className="form-text text-muted">
-                        시작일로부터 최대 {selectedLicense.max_loan_days}일까지 자동 설정됩니다.
+                        시작일로부터 최대 {selectedLicense.max_loan_days}일까지 선택 가능합니다.
                       </small>
                     </div>
                   </div>
