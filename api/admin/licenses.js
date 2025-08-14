@@ -75,58 +75,39 @@ module.exports = async (req, res) => {
       }
 
       try {
-        // 전북대학교 organization_id 조회
-        const { data: orgData, error: orgError } = await supabase
-          .from('organizations')
-          .select('id')
-          .eq('email_domain', 'jbnu.ac.kr')
-          .single();
-
-        if (orgError || !orgData) {
-          return res.status(500).json({ 
-            error: '기관 정보를 찾을 수 없습니다.',
-            details: orgError?.message 
-          });
-        }
-
-        const newLicenseId = uuidv4();
+        // organization_id 의존성 제거 - 직접 라이선스 추가
         const insertData = {
-          id: newLicenseId,
-          // organization_id 제거 - 외래 키 제약 조건 문제 해결
-          name: name.trim(),
-          description: '',
-          total_count: 1,
-          available_count: 1,
-          organization: organization.trim(),
-          license_id: license_id.trim(),
+          id: uuidv4(),
+          name,
+          organization,
+          license_id,
           max_loan_days: parseInt(max_loan_days),
-          status: 'active',
+          is_available: true,
           created_at: new Date().toISOString()
         };
 
-        const { data: newLicense, error: insertError } = await supabase
+        const { data, error } = await supabase
           .from('ai_licenses')
           .insert([insertData])
-          .select()
-          .single();
+          .select();
 
-        if (insertError) {
-          console.error('라이선스 추가 오류:', insertError);
+        if (error) {
+          console.error('라이선스 추가 오류:', error);
           return res.status(500).json({ 
-            error: '라이선스 추가 중 오류가 발생했습니다.',
-            details: insertError.message 
+            error: '라이선스 추가에 실패했습니다.',
+            details: error.message 
           });
         }
 
-        return res.status(201).json({
+        return res.status(201).json({ 
           message: '라이선스가 성공적으로 추가되었습니다.',
-          license: newLicense
+          license: data[0]
         });
-        
+
       } catch (err) {
-        console.error('라이선스 추가 예외:', err);
+        console.error('예외 발생:', err);
         return res.status(500).json({ 
-          error: '라이선스 추가 중 예외가 발생했습니다.',
+          error: '서버 내부 오류가 발생했습니다.',
           details: err.message 
         });
       }
