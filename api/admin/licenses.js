@@ -79,12 +79,13 @@ module.exports = async (req, res) => {
         const insertData = {
           id: uuidv4(),
           name,
-          organization,
-          license_id,
+          organization,  // 이것은 organization_id (UUID)여야 함
+          license_id,    // 이 필드는 스키마에 없음
           max_loan_days: parseInt(max_loan_days),
-          is_available: true,
+          is_available: true,  // 이 필드는 스키마에 없음
           created_at: new Date().toISOString()
         };
+        // 누락된 필드: description, total_licenses, available_licenses
 
         const { data, error } = await supabase
           .from('ai_licenses')
@@ -201,3 +202,70 @@ module.exports = async (req, res) => {
     });
   }
 };
+
+### 3. **Supabase RLS (행 수준 보안) 문제**
+Supabase 대시보드에서 테이블들에 RLS가 활성화되지 않았다는 보안 경고가 표시되어 접근 문제를 일으킬 수 있습니다.
+
+## 해결방안:
+
+### 방법 1: 코드 수정 (권장)
+<mcfile name="licenses.js" path="c:\Users\jbnu\ai-license-system\api\admin\licenses.js"></mcfile> 파일을 올바른 데이터베이스 스키마에 맞게 수정:
+```javascript
+if (req.method === 'POST') {
+  const { name, description, total_licenses, max_loan_days } = req.body;
+
+  if (!name || !description || !total_licenses || !max_loan_days) {
+    return res.status(400).json({ error: '모든 필드를 입력해주세요.' });
+  }
+
+  try {
+    // JBNU 기관 ID 조회
+    const { data: organization, error: orgError } = await supabase
+      .from('organizations')
+      .select('id')
+      .eq('email_domain', 'jbnu.ac.kr')
+      .single();
+
+    if (orgError || !organization) {
+      return res.status(500).json({ 
+        error: 'JBNU 기관 정보를 찾을 수 없습니다. 먼저 기관을 등록해주세요.' 
+      });
+    }
+
+    const insertData = {
+      id: uuidv4(),
+      name,
+      description,
+      organization_id: organization.id,
+      total_licenses: parseInt(total_licenses),
+      available_licenses: parseInt(total_licenses),
+      max_loan_days: parseInt(max_loan_days),
+      created_at: new Date().toISOString()
+    };
+
+    const { data, error } = await supabase
+      .from('ai_licenses')
+      .insert([insertData])
+      .select();
+
+    if (error) {
+      console.error('라이선스 추가 오류:', error);
+      return res.status(500).json({ 
+        error: '라이선스 추가에 실패했습니다.',
+        details: error.message 
+      });
+    }
+
+    return res.status(201).json({ 
+      message: '라이선스가 성공적으로 추가되었습니다.',
+      license: data[0]
+    });
+
+  } catch (err) {
+    console.error('예외 발생:', err);
+    return res.status(500).json({ 
+      error: '서버 내부 오류가 발생했습니다.',
+      details: err.message 
+    });
+  }
+}
